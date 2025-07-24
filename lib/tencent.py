@@ -3,7 +3,6 @@ import httpx
 import re
 import parsel
 from urllib.parse import urljoin
-import json
 import asyncio
 
 
