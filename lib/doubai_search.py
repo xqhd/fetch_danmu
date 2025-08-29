@@ -1,11 +1,12 @@
 import re
-import httpx
+from curl_cffi import requests
 from urllib import parse
 import cn2an
+from typing import Optional
 
 
 async def get_platform_link(douban_id):
-    async with httpx.AsyncClient() as client:
+    async with requests.AsyncSession() as client:
         res = await client.get(
             f"https://movie.douban.com/subject/{douban_id}/",
             headers={
@@ -13,7 +14,7 @@ async def get_platform_link(douban_id):
             },
         )
     urls = re.findall(
-        'https://www.douban.com/link2/\?url=(.*?)",.+ep:.+"(.*?)"', res.text
+        r'https://www.douban.com/link2/\?url=(.*?)",.+ep:.+"(.*?)"', res.text
     )
     url_dict = {}
     for url in urls:
@@ -25,7 +26,7 @@ async def get_platform_link(douban_id):
     return url_dict
 
 
-async def douban_select(name: str, tv_num: str):
+async def douban_select(name: str, tv_num: Optional[str] = None):
     if tv_num is None:
         tv_num = "一"
     else:
@@ -54,7 +55,7 @@ async def douban_select(name: str, tv_num: str):
         "referer": "https://servicewechat.com/wx2f9b06c1de1ccfca/99/page-frame.html",
         "accept-language": "zh-CN,zh;q=0.9",
     }
-    async with httpx.AsyncClient() as client:
+    async with requests.AsyncSession() as client:
         res = await client.get(url, params=params, headers=headers)
         json_data = res.json().get("items", [])
         for i in json_data:
@@ -64,7 +65,7 @@ async def douban_select(name: str, tv_num: str):
                 continue
             d_tv_num = re.findall("第(.*?)季", data.get("title", ""))
             if not d_tv_num:
-                d_tv_num = re.findall(f"{name}(\d+)", data.get("title", ""))
+                d_tv_num = re.findall(rf"{name}(\d+)", data.get("title", ""))
             if not d_tv_num:
                 roman_num = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"]
                 roman_num_str = "|".join(roman_num)
@@ -99,7 +100,7 @@ async def douban_get_first_url(target_id):
         "referer": "https://servicewechat.com/wx2f9b06c1de1ccfca/99/page-frame.html",
         "accept-language": "zh-CN,zh;q=0.9",
     }
-    async with httpx.AsyncClient() as client:
+    async with requests.AsyncSession() as client:
         res = await client.get(url, headers=headers)
     json_data = res.json().get("vendors", [])
     url_list = []
@@ -110,3 +111,46 @@ async def douban_get_first_url(target_id):
         if item.get("uri"):
             url_list.append(item.get("uri"))
     return url_list
+
+
+async def select_by_360(
+    name: str, tv_num: Optional[str] = None, season: Optional[bool] = False
+):
+    if tv_num is None:
+        tv_num = "一"
+    else:
+        try:
+            tv_num = cn2an.an2cn(int(tv_num))
+        except (ValueError, TypeError):
+            # 如果转换失败，保持原样
+            pass
+    url = f"https://api.so.360kan.com/index?kw={name}&from&pageno=1&v_ap=1&tab=all"
+    async with requests.AsyncSession() as session:
+        res = await session.get(url, impersonate="chrome124")
+        json_data = res.json()
+        for item in json_data.get("data", {}).get("longData", {}).get("rows", []):
+            if item.get("playlinks", {}) == {}:
+                continue
+            title = item.get("titleTxt", "")
+            d_tv_num = re.findall("第(.*?)季", title)
+            if not d_tv_num:
+                d_tv_num = re.findall(rf"{re.escape(name)}(\d+)", title)
+            if not d_tv_num:
+                roman_num = ["", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"]
+                roman_num_str = "|".join(roman_num)
+                _d_tv_num = re.findall(f"{re.escape(name)}([{roman_num_str}]+)", title)
+                if _d_tv_num:
+                    d_tv_num = [roman_num.index(_d_tv_num[0])]
+            if not d_tv_num:
+                d_tv_num = "一"
+            else:
+                d_tv_num = d_tv_num[0]
+            try:
+                d_tv_num = cn2an.an2cn(int(d_tv_num))
+            except (ValueError, TypeError):
+                pass
+            if name.split(" ")[0] in title and (tv_num == name or d_tv_num == tv_num):
+                if (season and int(item.get("cat_id")) >= 2) or (
+                    not season and int(item.get("cat_id")) < 2
+                ):
+                    return item

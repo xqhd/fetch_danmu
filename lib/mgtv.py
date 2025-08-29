@@ -1,6 +1,6 @@
 import asyncio
-from typing import List
-import httpx
+from typing import List, Optional
+from curl_cffi import requests
 
 
 def time_to_second(time: list):
@@ -44,10 +44,11 @@ def parse_data(data):
         parsed_data = {}
         parsed_data["text"] = item.get("content", "")
         parsed_data["time"] = item.get("time", 0) / 1000
-        parsed_data["mode"] = 0
+        parsed_data["position"] = "right"
         parsed_data["color"] = "#FFFFFF"
-        parsed_data["border"] = False
-        parsed_data["style"] = {}
+        parsed_data["size"] = "25px"
+        # parsed_data["border"] = False
+        # parsed_data["style"] = {}
         barrage_list.append(parsed_data)
     return barrage_list
 
@@ -70,10 +71,32 @@ async def read_barrage(client, params):
 async def get_mgtv_danmu(url: str):
     danmu_list = []
     if "mgtv.com" in url:
-        async with httpx.AsyncClient() as client:
+        async with requests.AsyncSession() as client:
             urls = await get_link(client, url)
             danmu_list = await read_barrage(client, urls)
     return danmu_list
+
+
+async def get_mgtv_episode_url(
+    url: str, url_dict: Optional[dict] = None, page: int = 1
+) -> dict[str, str]:
+    if "mgtv.com" not in url:
+        if url_dict is None:
+            url_dict = {}
+        video_id = url.split(".")[-2].split("/")[-1]
+        _data_url = f"https://pcweb.api.mgtv.com/episode/list?version=5.5.35&video_id={video_id}&page={page}&size=50"
+        async with requests.AsyncSession() as session:
+            res = await session.get(_data_url, impersonate="chrome124")
+            for item in res.json().get("data", {}).get("list", []):
+                if item.get("t1") not in url_dict.keys():
+                    url_dict[item.get("t1")] = "https://www.mgtv.com" + item.get("url")
+            if len(url_dict.keys()) < res.json().get("data", {}).get(
+                "total", len(url_dict.keys())
+            ):
+                page += 1
+                return await get_mgtv_episode_url(url, url_dict, page)
+            return url_dict
+    return {}
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-import httpx
+from curl_cffi import requests
 import asyncio
 from typing import List
 import re
@@ -6,7 +6,7 @@ import json
 
 
 async def get_link(client, url) -> List:
-    res = await client.get(url)
+    res = await client.get(url, impersonate="chrome124")
     vid_matches = re.findall('vid="(.*?)";', res.text)
     if not vid_matches:
         return []
@@ -25,16 +25,17 @@ def parse(data):
         parsed_data = {}
         parsed_data["time"] = d.get("v", 0)
         parsed_data["text"] = d.get("c", "")
-        parsed_data["mode"] = 0
+        parsed_data["position"] = "right"
         parsed_data["color"] = "#FFFFFF"
-        parsed_data["border"] = False
-        parsed_data["style"] = {}
+        parsed_data["size"] = "25px"
+        # parsed_data["border"] = False
+        # parsed_data["style"] = {}
         data_list.append(parsed_data)
     return data_list
 
 
 async def fetch_single_barrage(client, param):
-    res = await client.get(param)
+    res = await client.get(param, impersonate="chrome124")
     return parse(res.json())
 
 
@@ -50,7 +51,7 @@ async def read_barrage(client, urls):
 async def get_souhu_danmu(url: str):
     danmu_list = []
     if "tv.sohu.com" in url:
-        async with httpx.AsyncClient() as client:
+        async with requests.AsyncSession() as client:
             urls = await get_link(client, url)
             danmu_list = await read_barrage(client, urls)
     return danmu_list
@@ -58,8 +59,8 @@ async def get_souhu_danmu(url: str):
 
 async def get_souhu_episode_url(url):
     if "tv.sohu.com" in url:
-        async with httpx.AsyncClient() as client:
-            _res = await client.get(url)
+        async with requests.AsyncSession() as client:
+            _res = await client.get(url, impersonate="chrome124")
             vid_matches = re.findall('vid="(.*?)";', _res.text)
             if not vid_matches:
                 return {}
@@ -69,7 +70,9 @@ async def get_souhu_episode_url(url):
                 return {}
             play_list_id = play_list_id_matches[0]
             params = {"playlistid": play_list_id, "vid": vid}
-            res = await client.get("https://pl.hd.sohu.com/videolist", params)
+            res = await client.get(
+                "https://pl.hd.sohu.com/videolist", params, impersonate="chrome124"
+            )
             res.encoding = res.charset_encoding
             res_data = json.loads(res.text.encode("utf-8"))
             url_dict = {}

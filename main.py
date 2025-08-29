@@ -4,34 +4,28 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 import asyncio
-from .lib.doubai_search import get_platform_link, douban_select, douban_get_first_url
-from .lib.bilibili import get_bilibili_danmu, get_bilibili_episode_url
-from .lib.iqiyi import get_iqiyi_danmu, get_iqiyi_episode_url
-from .lib.mgtv import get_mgtv_danmu
-from .lib.souhu import get_souhu_danmu, get_souhu_episode_url
-from .lib.tencent import get_tencent_danmu, get_tencent_episode_url
-from .lib.youku import get_youku_danmu, get_youku_episode_url
-from .lib.utils import other2http
-
-
-# Pydantic Models
-class DanmuItem(BaseModel):
-    """弹幕项目模型"""
-
-    text: str = Field(..., description="弹幕内容")
-    time: float = Field(..., ge=0, description="弹幕时间(秒)")
-    color: str = Field(default="#FFFFFF", description="弹幕颜色")
-    mode: int = Field(default=0, ge=0, le=2, description="弹幕模式")
-    style: Dict[str, Any] = Field(default_factory={}, description="弹幕样式")
-    border: bool = Field(default=False, description="是否有边框")
+from lib.doubai_search import (
+    get_platform_link,
+    douban_select,
+    douban_get_first_url,
+    select_by_360,
+)
+from lib.bilibili.bilibili import get_bilibili_danmu, get_bilibili_episode_url
+from lib.iqiyi.iqiyi import get_iqiyi_danmu, get_iqiyi_episode_url
+from lib.mgtv import get_mgtv_danmu, get_mgtv_episode_url
+from lib.souhu import get_souhu_danmu, get_souhu_episode_url
+from lib.tencent import get_tencent_danmu, get_tencent_episode_url
+from lib.youku import get_youku_danmu, get_youku_episode_url
+from lib.utils import other2http
 
 
 class ApiResponse(BaseModel):
     """统一API响应模型"""
 
     code: int = Field(..., description="响应码, 0表示成功, -1表示失败")
-    msg: Optional[str] = Field(None, description="错误信息")
-    data: Optional[List[DanmuItem]] = Field(None, description="弹幕数据")
+    name: str = Field(..., description="视频名称")
+    danmu_data: Optional[int] = Field(None, description="弹幕数据条数")
+    danmuku: Optional[list] = Field(None, description="弹幕数据")
 
 
 class ErrorResponse(BaseModel):
@@ -63,7 +57,7 @@ class DanmuService:
     """弹幕服务类"""
 
     @staticmethod
-    async def get_all_danmu(url: str) -> List[DanmuItem]:
+    async def get_all_danmu(url: str) -> list:
         """使用异步并行执行所有平台获取弹幕"""
         tasks = [
             get_tencent_danmu(url),
@@ -83,7 +77,18 @@ class DanmuService:
                 if isinstance(result, Exception):
                     continue  # 忽略异常结果
                 if result:
-                    all_danmu.extend([DanmuItem(**item) for item in result])
+                    all_danmu.extend(
+                        [
+                            [
+                                item["time"],
+                                item["position"],
+                                item["color"],
+                                item["size"],
+                                item["text"],
+                            ]
+                            for item in result
+                        ]
+                    )
             return all_danmu
         except Exception as e:
             raise HTTPException(
@@ -102,10 +107,15 @@ class DanmuService:
                 get_souhu_episode_url(platform_url),
                 get_tencent_episode_url(platform_url),
                 get_youku_episode_url(platform_url),
+                get_mgtv_episode_url(platform_url),
             ]
             results = await asyncio.gather(*tasks, return_exceptions=True)
             ## 过滤掉空字典并合并
-            results = [result for result in results if result and not isinstance(result, Exception)]
+            results = [
+                result
+                for result in results
+                if result and not isinstance(result, Exception)
+            ]
             if len(results) == 0:
                 continue
             # 合并所有结果而不是只取第一个
@@ -184,7 +194,9 @@ async def danmu_by_douban_id(
     # 按时间排序
     all_danmu.sort(key=lambda x: x.time)
 
-    return ApiResponse(code=0, data=all_danmu)
+    return ApiResponse(
+        code=0, name=str(douban_id), danmu_data=len(all_danmu), danmuku=all_danmu
+    )
 
 
 @app.get(
@@ -202,9 +214,32 @@ async def danmu_by_douban_id(
 async def danmu_by_title(
     title: str = Query(..., min_length=1, description="视频标题"),
     season_number: Optional[int] = Query(1, ge=1, description="季数, 默认为1"),
+    season: Optional[bool] = Query(
+        True, description="是否是连续剧, 默认为True,电视剧选True,电影选False"
+    ),
     episode_number: Optional[int] = Query(None, ge=1, description="集数, 可选"),
 ):
     """通过标题获取弹幕"""
+    # 通过标题搜索360
+    _360data = await select_by_360(title, season_number, season)
+    platform_url_list = []
+    for key, value in _360data.get("playlinks", {}).items():
+        platform_url_list.append(value)
+    url_dict = await DanmuService.get_episode_url(platform_url_list)
+    if url_dict:
+        all_danmu = []
+        if episode_number is not None and str(episode_number) in url_dict:
+            urls = url_dict[str(episode_number)]
+        else:
+            first_key = list(url_dict.keys())[0]
+            urls = url_dict[first_key]
+        for url in urls:
+            danmu_data = await DanmuService.get_all_danmu(url)
+            all_danmu.extend(danmu_data)
+        all_danmu.sort(key=lambda x: x.time)
+        return ApiResponse(
+            code=0, name=str(title), danmu_data=len(all_danmu), danmuku=all_danmu
+        )
     # 通过标题搜索豆瓣ID
     douban_data = await douban_select(title, season_number)
     if not douban_data:
@@ -213,7 +248,7 @@ async def danmu_by_title(
         )
 
     douban_id = douban_data["target_id"]
-    # print(douban_id)
+    print(douban_id)
     # 调用豆瓣ID接口
     return await danmu_by_douban_id(douban_id, episode_number)
 
@@ -237,7 +272,9 @@ async def danmu_by_url(url: str = Query(..., min_length=1, description="视频UR
     # 按时间排序
     danmu_data.sort(key=lambda x: x.time)
 
-    return ApiResponse(code=0, data=danmu_data)
+    return ApiResponse(
+        code=0, name=str(url), danmu_data=len(danmu_data), danmuku=danmu_data
+    )
 
 
 @app.get("/health")

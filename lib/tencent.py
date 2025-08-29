@@ -1,12 +1,12 @@
 from typing import List
-import httpx
+from curl_cffi import requests
 import re
 import parsel
 from urllib.parse import urljoin
 import asyncio
 
 
-async def get_link(url, client: httpx.AsyncClient = None) -> List[str]:
+async def get_link(url, client: requests.AsyncSession = None) -> List[str]:
     api_danmaku_base = "https://dm.video.qq.com/barrage/base/"
     api_danmaku_segment = "https://dm.video.qq.com/barrage/segment/"
     res = await client.get(url)
@@ -40,15 +40,16 @@ def parse_data(data: dict) -> List[dict]:
         parsed_data = {}
         parsed_data["text"] = item.get("content", "")
         parsed_data["time"] = int(item.get("time_offset", 0)) / 1000
-        parsed_data["mode"] = 0
+        parsed_data["position"] = "right"
         parsed_data["color"] = "#FFFFFF"
-        parsed_data["border"] = False
-        parsed_data["style"] = {}
+        parsed_data["size"] = "25px"
+        # parsed_data["border"] = False
+        # parsed_data["style"] = {}
         barrage_list.append(parsed_data)
     return barrage_list
 
 
-async def fetch_single_barrage(client: httpx.AsyncClient, url: str) -> List[dict]:
+async def fetch_single_barrage(client: requests.AsyncSession, url: str) -> List[dict]:
     """异步获取单个URL的弹幕数据"""
     try:
         res = await client.get(url)
@@ -58,7 +59,9 @@ async def fetch_single_barrage(client: httpx.AsyncClient, url: str) -> List[dict
         return []
 
 
-async def read_barrage(urls: List[str], client: httpx.AsyncClient = None) -> List[dict]:
+async def read_barrage(
+    urls: List[str], client: requests.AsyncSession = None
+) -> List[dict]:
     """异步并发获取所有URL的弹幕数据"""
     barrage_list = []
 
@@ -75,7 +78,7 @@ async def read_barrage(urls: List[str], client: httpx.AsyncClient = None) -> Lis
 async def get_tencent_danmu(url: str):
     danmu_list = []
     if "v.qq.com" in url:
-        async with httpx.AsyncClient() as client:
+        async with requests.AsyncSession() as client:
             urls = await get_link(url, client=client)
             danmu_list = await read_barrage(urls, client=client)
     return danmu_list
@@ -83,7 +86,7 @@ async def get_tencent_danmu(url: str):
 
 async def get_tencent_episode_url(url: str) -> dict[str, str]:
     if "v.qq.com" in url:
-        async with httpx.AsyncClient() as client:
+        async with requests.AsyncSession() as client:
             res = await client.get(url)
             sel = parsel.Selector(res.text)
             title = sel.xpath("//title/text()").get().split("_")[0]

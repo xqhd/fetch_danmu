@@ -1,12 +1,12 @@
 from typing import List
 import re
-import httpx
+from curl_cffi import requests
 import urllib.parse
 import time
 from hashlib import md5
 from functools import reduce
 import asyncio
-from . import bilibilidm_pb2 as Danmaku
+import lib.bilibili.bilibilidm_pb2 as Danmaku
 # import bilibilidm_pb2 as Danmaku
 
 mixinKeyEncTab = [
@@ -83,7 +83,7 @@ async def getWbiKeys() -> tuple[str, str]:
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3",
         "Referer": "https://www.bilibili.com/",
     }
-    async with httpx.AsyncClient() as client:
+    async with requests.AsyncSession() as client:
         resp = await client.get(
             "https://api.bilibili.com/x/web-interface/nav", headers=headers
         )
@@ -118,7 +118,7 @@ def encWbi(params: dict, img_key: str, sub_key: str):
     return params
 
 
-async def get_link(url, client: httpx.AsyncClient = None) -> List[str]:
+async def get_link(url, client: requests.AsyncSession = None) -> List[str]:
     api_epid_cid = "https://api.bilibili.com/pgc/view/web/season"
     img_key, sub_key = await getWbiKeys()
     if url.find("bangumi/") != -1 and url.find("ep") != -1:
@@ -128,10 +128,8 @@ async def get_link(url, client: httpx.AsyncClient = None) -> List[str]:
             return []
         epid = epid_matches[0]
         params = {"ep_id": epid}
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
-        }
-        res = await client.get(api_epid_cid, params=params, headers=headers)
+
+        res = await client.get(api_epid_cid, params=params, impersonate="chrome110")
         res_json = res.json()
         if res_json.get("code") != 0:
             print("获取番剧信息失败")
@@ -165,18 +163,18 @@ def parse_data(data):
         parsed_data.setdefault("text", elem.content)
         parsed_data.setdefault("time", float(elem.progress / 1000))
         parsed_data.setdefault("color", "#FFFFFF")
-        parsed_data.setdefault("style", {"size": elem.fontsize})
-        parsed_data.setdefault("id", elem.idStr)
+        parsed_data.setdefault("size", f"{elem.fontsize}px")
+        # parsed_data.setdefault("id", elem.idStr)
         mode = 0
         match elem.mode:
             case 1 | 2 | 3:
-                mode = 0
+                mode = "right"
             case 4:
-                mode = 2
+                mode = "bottom"
             case 5:
-                mode = 1
-        parsed_data.setdefault("mode", mode)
-        parsed_data["border"] = False
+                mode = "top"
+        parsed_data.setdefault("position", mode)
+        # parsed_data["border"] = False
         barrage_list.append(parsed_data)
     return barrage_list
 
@@ -187,15 +185,14 @@ def decompress_data(content):
     return danmaku_seg
 
 
-async def fetch_single_barrage(url, client: httpx.AsyncClient) -> List[dict]:
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
-    }
-    res = await client.get(url, headers=headers)
+async def fetch_single_barrage(url, client: requests.AsyncSession) -> List[dict]:
+    res = await client.get(url, impersonate="chrome110")
     return parse_data(decompress_data(res.content))
 
 
-async def read_barrage(urls: List[str], client: httpx.AsyncClient = None) -> List[dict]:
+async def read_barrage(
+    urls: List[str], client: requests.AsyncSession = None
+) -> List[dict]:
     tasks = [fetch_single_barrage(url, client=client) for url in urls]
     results = await asyncio.gather(*tasks)
     barrage_list = []
@@ -207,7 +204,7 @@ async def read_barrage(urls: List[str], client: httpx.AsyncClient = None) -> Lis
 async def get_bilibili_danmu(url: str):
     danmu_list = []
     if "bilibili.com" in url:
-        async with httpx.AsyncClient() as client:
+        async with requests.AsyncSession() as client:
             urls = await get_link(url, client=client)
             danmu_list = await read_barrage(urls, client=client)
     return danmu_list
@@ -217,17 +214,16 @@ async def get_bilibili_episode_url(url: str):
     url_dict = {}
     if "bilibili.com" in url:
         api_epid_cid = "https://api.bilibili.com/pgc/view/web/season"
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
-        }
-        async with httpx.AsyncClient() as client:
+        async with requests.AsyncSession() as client:
             if url.find("bangumi/") != -1 and url.find("ep") != -1:
                 epid_matches = re.findall(r"ep(\d+)", url)
                 if not epid_matches:
                     return url_dict
                 epid = epid_matches[0]
                 params = {"ep_id": epid}
-                res = await client.get(url=api_epid_cid, params=params, headers=headers)
+                res = await client.get(
+                    url=api_epid_cid, params=params, impersonate="chrome110"
+                )
                 res_json = res.json()
                 for item in res_json.get("result", {}).get("episodes", []):
                     if item.get("section_type") == 0:

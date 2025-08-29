@@ -1,6 +1,6 @@
 import re
 from typing import List
-import httpx
+from curl_cffi import requests
 import time
 import base64
 import json
@@ -31,7 +31,7 @@ async def get_tk_enc(client):
 
 
 async def create_client():
-    client = httpx.AsyncClient()
+    client = requests.AsyncSession()
     client.headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
     }
@@ -86,7 +86,7 @@ async def get_vid_list(client, url) -> List:
     max_mat = await get_vinfos_by_video_id(client, video_id)
     try:
         segments = int(float(max_mat) / 60) + 1
-    except:
+    except (ValueError, TypeError):
         segments = 10  # 默认10个分段
 
     # 创建所有时间段的参数列表
@@ -106,10 +106,11 @@ def parse_data(data):
         parsed_data = {}
         parsed_data["text"] = danmu.get("content", "")
         parsed_data["time"] = danmu.get("playat") / 1000
-        parsed_data["mode"] = 0
+        parsed_data["position"] = "right"
         parsed_data["color"] = "#FFFFFF"
-        parsed_data["border"] = False
-        parsed_data["style"] = {}
+        parsed_data["size"] = "25px"
+        # parsed_data["border"] = False
+        # parsed_data["style"] = {}
         barrage_list.append(parsed_data)
     return barrage_list
 
@@ -199,7 +200,7 @@ async def read_barrage(client, params):
 async def get_youku_danmu(url: str):
     danmu_list = []
     if "youku.com" in url:
-        async with httpx.AsyncClient() as client:
+        async with requests.AsyncSession() as client:
             client.headers = {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
             }
@@ -212,7 +213,7 @@ async def get_youku_danmu(url: str):
 
 async def get_youku_episode_url(url: str) -> dict[str, str]:
     if "youku.com" in url:
-        async with httpx.AsyncClient() as client:
+        async with requests.AsyncSession() as client:
             res = await client.get(url)
             selector = parsel.Selector(res.text)
             url_dict = {}
