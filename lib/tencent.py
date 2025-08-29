@@ -4,6 +4,7 @@ import re
 import parsel
 from urllib.parse import urljoin
 import asyncio
+import json
 
 
 async def get_link(url, client: requests.AsyncSession = None) -> List[str]:
@@ -39,12 +40,15 @@ def parse_data(data: dict) -> List[dict]:
     for item in data.get("barrage_list", []):
         parsed_data = {}
         parsed_data["text"] = item.get("content", "")
-        parsed_data["time"] = int(item.get("time_offset", 0)) / 1000
+        parsed_data["time"] = float(item.get("time_offset", 0)) / 1000
         parsed_data["position"] = "right"
-        parsed_data["color"] = "#FFFFFF"
+        parsed_data["color"] = "#ffffff"
         parsed_data["size"] = "25px"
         # parsed_data["border"] = False
         # parsed_data["style"] = {}
+        if item.get("content_style") != "":
+            content_style = json.loads(item.get("content_style"))
+            parsed_data["color"] = content_style.get("color", "#ffffff")
         barrage_list.append(parsed_data)
     return barrage_list
 

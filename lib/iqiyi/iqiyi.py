@@ -53,8 +53,8 @@ def parse_data(data):
         for item in entry.bulletInfo:
             parsed_data = {}
             parsed_data.setdefault("text", item.content)
-            parsed_data.setdefault("time", int(item.showTime))
-            parsed_data.setdefault("color", "#FFFFFF")
+            parsed_data.setdefault("time", float(item.showTime))
+            parsed_data.setdefault("color", f"#{item.a8}")
             parsed_data.setdefault("size", "25px")
             parsed_data["position"] = "right"
             # parsed_data["border"] = False

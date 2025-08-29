@@ -192,7 +192,7 @@ async def danmu_by_douban_id(
         all_danmu.extend(danmu_data)
 
     # 按时间排序
-    all_danmu.sort(key=lambda x: x.time)
+    all_danmu.sort(key=lambda x: x[0])
 
     return ApiResponse(
         code=0, name=str(douban_id), danmu_data=len(all_danmu), danmuku=all_danmu
@@ -236,7 +236,7 @@ async def danmu_by_title(
         for url in urls:
             danmu_data = await DanmuService.get_all_danmu(url)
             all_danmu.extend(danmu_data)
-        all_danmu.sort(key=lambda x: x.time)
+        all_danmu.sort(key=lambda x: x[0])
         return ApiResponse(
             code=0, name=str(title), danmu_data=len(all_danmu), danmuku=all_danmu
         )
@@ -270,7 +270,7 @@ async def danmu_by_url(url: str = Query(..., min_length=1, description="视频UR
     danmu_data = await DanmuService.get_all_danmu(url)
 
     # 按时间排序
-    danmu_data.sort(key=lambda x: x.time)
+    danmu_data.sort(key=lambda x: x[0])
 
     return ApiResponse(
         code=0, name=str(url), danmu_data=len(danmu_data), danmuku=danmu_data

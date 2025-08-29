@@ -7,6 +7,7 @@ from hashlib import md5
 from functools import reduce
 import asyncio
 import lib.bilibili.bilibilidm_pb2 as Danmaku
+from lib.utils import int_to_hex_color
 # import bilibilidm_pb2 as Danmaku
 
 mixinKeyEncTab = [
@@ -162,7 +163,7 @@ def parse_data(data):
         parsed_data = {}
         parsed_data.setdefault("text", elem.content)
         parsed_data.setdefault("time", float(elem.progress / 1000))
-        parsed_data.setdefault("color", "#FFFFFF")
+        parsed_data.setdefault("color", int_to_hex_color(int(elem.color)))
         parsed_data.setdefault("size", f"{elem.fontsize}px")
         # parsed_data.setdefault("id", elem.idStr)
         mode = 0

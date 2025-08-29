@@ -107,7 +107,13 @@ def parse_data(data):
         parsed_data["text"] = danmu.get("content", "")
         parsed_data["time"] = danmu.get("playat") / 1000
         parsed_data["position"] = "right"
-        parsed_data["color"] = "#FFFFFF"
+        tmp_color = json.loads(danmu.get("propertis", "{}")).get("color", "#ffffff")
+        tmp_color = (
+            str(tmp_color)
+            if isinstance(tmp_color, str) and tmp_color.startswith("#")
+            else f"#{int(tmp_color):06X}"
+        )
+        parsed_data["color"] = tmp_color
         parsed_data["size"] = "25px"
         # parsed_data["border"] = False
         # parsed_data["style"] = {}
