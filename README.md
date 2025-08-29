@@ -78,6 +78,7 @@ GET /danmu/by_title
 
 - `title` (必需): 视频标题
 - `season_number` (可选): 季数，默认为 1
+- `season` (可选): 是否是连续剧，默认为 True，电视剧选 True，电影选 False
 - `episode_number` (可选): 集数
 
 **示例:**
@@ -121,16 +122,12 @@ curl "http://localhost:8000/health"
 ```json
 {
   "code": 0,
-  "msg": null,
-  "data": [
-    {
-      "text": "弹幕内容",
-      "time": 123.45,
-      "color": "#FFFFFF",
-      "mode": 0,
-      "style": {},
-      "border": false
-    }
+  "name": "36172040",
+  "danmu_data": 13223,
+  "danmuku": [
+    [0.0, "right", "#FFFFFF", "25px", "恭迎师祖出山"],
+    [0.0, "right", "#FFFFFF", "25px", "来支持献鱼啦"],
+    ...
   ]
 }
 ```
@@ -143,54 +140,6 @@ curl "http://localhost:8000/health"
   "msg": "错误信息"
 }
 ```
-
-## 数据模型
-
-### DanmuItem (弹幕项)
-
-**弹幕的返回格式是按照弹幕库的格式匹配的**
-
-| 字段   | 类型    | 描述          | 默认值  |
-| ------ | ------- | ------------- | ------- |
-| text   | string  | 弹幕内容      | -       |
-| time   | float   | 弹幕时间(秒)  | -       |
-| color  | string  | 弹幕颜色      | #FFFFFF |
-| mode   | int     | 弹幕模式(0-2) | 0       |
-| style  | object  | 弹幕样式      | {}      |
-| border | boolean | 是否有边框    | false   |
-
-## 核心组件
-
-### DanmuService
-
-中央服务类，负责：
-
-- 并行调用各平台弹幕提取器
-- 异常处理和容错
-- 数据聚合和标准化
-
-### 平台提取器
-
-每个平台都有独立的提取器模块：
-
-- 处理平台特定的 URL 格式
-- 解析平台 API 响应
-- 统一数据格式输出
-
-## 开发指南
-
-### 添加新平台支持
-
-1. 在 `lib/` 目录创建新的平台提取器
-2. 实现 `get_*_danmu(url)` 函数
-3. 在 `DanmuService` 中添加对应的任务
-4. 更新文档
-
-## 错误处理
-
-- HTTP 404: 未找到对应的视频链接或豆瓣信息
-- HTTP 500: 服务器内部错误
-- 平台级错误: 不会中断整体请求，只影响该平台数据
 
 ## 许可证
 
