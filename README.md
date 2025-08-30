@@ -1,6 +1,12 @@
 # 弹幕获取 API (Danmu Fetch API)
 
-一个基于 [Robyn](https://robyn.tech/) 的异步弹幕聚合服务，支持从多个主流视频平台获取弹幕数据，具体支持的平台请看`provides`文件目录，返回用于[weizhenye/Danmaku](https://github.com/weizhenye/Danmaku)的弹幕数据。
+鉴于 Robyn 远强于 Fastapi，所以重新用 Robyn 实现接口服务
+
+![](https://private-user-images.githubusercontent.com/29942790/291895825-4a2bba61-24e7-4ee2-8884-19b40204bfcd.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTY1ODA2MTMsIm5iZiI6MTc1NjU4MDMxMywicGF0aCI6Ii8yOTk0Mjc5MC8yOTE4OTU4MjUtNGEyYmJhNjEtMjRlNy00ZWUyLTg4ODQtMTliNDAyMDRiZmNkLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA4MzAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwODMwVDE4NTgzM1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTFhNWRkZmEyODU2YjYyOTBkMGEyMGRjMDEyYzBjODZlN2NhN2E3ZDRlZjc4N2FkYmU0ZmJkNDYxNzgwNzhmNWUmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.qijSGRsTdKf0YOWmC5j51s3TZRqkEzn2M68VMwEO-AM)
+
+---
+
+一个基于 [Robyn](https://github.com/sparckles/Robyn) 的异步弹幕聚合服务，支持从多个主流视频平台获取弹幕数据，具体支持的平台请看`provides`文件目录，返回用于[weizhenye/Danmaku](https://github.com/weizhenye/Danmaku)的弹幕数据。
 
 ## 功能特性
 
