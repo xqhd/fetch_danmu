@@ -125,6 +125,8 @@ async def get_danmu_by_url(url):
 async def get_danmu_by_id(id, episode_number):
     all_danmu = []
     urls = await get_platform_urls_by_id(id)
+    if not urls:
+        return all_danmu
     if episode_number in urls:
         url = urls[episode_number]
     else:
@@ -140,6 +142,8 @@ async def get_danmu_by_id(id, episode_number):
 async def get_danmu_by_title(title, season_number, season, episode_number):
     all_danmu = []
     urls = await get_platform_urls_by_title(title, season_number, season)
+    if not urls:
+        return all_danmu
     if episode_number in urls:
         url = urls[episode_number]
     else:
