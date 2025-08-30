@@ -15,4 +15,4 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 EXPOSE 8080
 
-CMD ["python3", "-m", "robyn","app.py", "--fast", "--processes", "2", "--workers", "4", "--log-level=DEBUG"]
+CMD ["python3", "-m", "robyn","app.py", "--fast"]

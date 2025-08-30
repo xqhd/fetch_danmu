@@ -6,6 +6,8 @@ from robyn.openapi import (
 )
 from robyn.robyn import QueryParams
 from functions import get_danmu_by_url, get_danmu_by_id, get_danmu_by_title
+from urllib.parse import unquote_plus
+
 
 app = Robyn(
     __file__,
@@ -48,7 +50,7 @@ class TitleParams(QueryParams):
 async def danmu_by_url(query_params: UrlParams):
     """通过URL直接获取弹幕"""
     url = query_params.get("url", "")
-
+    url = unquote_plus(url)
     if url:
         danmu_data = await get_danmu_by_url(url)
         return (
@@ -90,9 +92,13 @@ async def danmu_by_douban_id(query_params: DoubanIdParams):
 @app.get("title")
 async def danmu_by_title(query_params: TitleParams):
     """通过视频名称直接获取弹幕"""
-    title = query_params.get("title", "")
+    title = unquote_plus(query_params.get("title", ""), encoding="utf-8")
     season_number = query_params.get("season_number", "1")
-    season = query_params.get("season", "True")
+    season = query_params.get("season", True)
+    if season == "false" or season == "False" or season == "0" or season == 0:
+        season = False
+    else:
+        season = True
     episode_number = query_params.get("episode_number", "1")
     if title:
         all_danmu = await get_danmu_by_title(
