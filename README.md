@@ -46,7 +46,7 @@
    python3 -m robyn app.py --dev
    ```
 
-服务将在 `http://0.0.0.0:8080` 启动，支持热重载。
+服务将在 `http://127.0.0.1:8080` 启动，支持热重载。
 
 ### API 文档
 
@@ -71,7 +71,7 @@ GET /douban_id
 
 ```bash
 ## 子夜归第一集弹幕
-curl "https://xiaohanys-danmuku.hf.space/douban_id?douban_id=36481469&episode_number=1"
+curl "http://127.0.0.1:8080/douban_id?douban_id=36481469&episode_number=1"
 ```
 
 ### 2. 通过标题搜索获取弹幕
@@ -90,7 +90,7 @@ GET /title
 **示例:**
 
 ```bash
-curl "https://xiaohanys-danmuku.hf.space/title?title=子夜归&season_number=1&episode_number=1&season=true"
+curl "http://127.0.0.1:8080/title?title=子夜归&season_number=1&episode_number=1&season=true"
 ```
 
 ### 3. 通过 URL 直接获取弹幕
@@ -106,7 +106,7 @@ GET /url
 **示例:**
 
 ```bash
-curl "https://xiaohanys-danmuku.hf.space/url?url=https://v.qq.com/x/cover/mzc002009y0nzq8/z4101m43ng6.html"
+curl "http://127.0.0.1:8080/url?url=https://v.qq.com/x/cover/mzc002009y0nzq8/z4101m43ng6.html"
 ```
 
 ## 响应格式
