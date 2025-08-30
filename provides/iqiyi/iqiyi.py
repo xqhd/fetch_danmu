@@ -4,7 +4,7 @@ import re
 import hashlib
 import brotlicffi as brotli
 
-import lib.iqiyi.iqiyidm_pb2 as Iqiyidm_pb2
+import provides.iqiyi.iqiyidm_pb2 as Iqiyidm_pb2
 
 # import iqiyidm_pb2 as Iqiyidm_pb2
 import asyncio

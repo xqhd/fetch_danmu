@@ -6,8 +6,8 @@ import time
 from hashlib import md5
 from functools import reduce
 import asyncio
-import lib.bilibili.bilibilidm_pb2 as Danmaku
-from lib.utils import int_to_hex_color
+import provides.bilibili.bilibilidm_pb2 as Danmaku
+from provides.utils import int_to_hex_color
 # import bilibilidm_pb2 as Danmaku
 
 mixinKeyEncTab = [

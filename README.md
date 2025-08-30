@@ -1,6 +1,6 @@
 # 弹幕获取 API (Danmu Fetch API)
 
-一个基于 FastAPI 的异步弹幕聚合服务，支持从多个主流视频平台获取弹幕数据，具体支持的平台请看`lib`文件目录，返回用于[weizhenye/Danmaku](https://github.com/weizhenye/Danmaku)的弹幕数据。
+一个基于 [Robyn](https://robyn.tech/) 的异步弹幕聚合服务，支持从多个主流视频平台获取弹幕数据，具体支持的平台请看`provides`文件目录，返回用于[weizhenye/Danmaku](https://github.com/weizhenye/Danmaku)的弹幕数据。
 
 ## 功能特性
 
@@ -9,7 +9,7 @@
 - 🎯 **平台聚合**: 一次请求获取所有支持平台的弹幕数据
 - 📊 **标准化输出**: 统一的弹幕数据格式，便于后续处理
 - 🛡️ **异常容错**: 单个平台失败不影响其他平台数据获取
-- 📖 **完整文档**: 内置 Swagger UI 和 ReDoc 文档
+- 📖 **完整文档**: 内置 Swagger UI 文档
 
 ## 快速开始
 
@@ -37,24 +37,23 @@
 
 3. **启动服务**
    ```bash
-   fastapi dev
+   python3 -m robyn app.py --dev
    ```
 
-服务将在 `http://0.0.0.0:8000` 启动，支持热重载。
+服务将在 `http://0.0.0.0:8080` 启动，支持热重载。
 
 ### API 文档
 
 启动服务后，可通过以下地址访问 API 文档：
 
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
+- Swagger UI: `http://localhost:8080/docs`
 
 ## API 接口
 
 ### 1. 通过豆瓣 ID 获取弹幕
 
 ```
-GET /danmu/by_douban_id
+GET /douban_id
 ```
 
 **参数:**
@@ -65,13 +64,14 @@ GET /danmu/by_douban_id
 **示例:**
 
 ```bash
-curl "http://localhost:8000/danmu/by_douban_id?douban_id=123456&episode_number=1"
+## 子夜归第一集弹幕
+curl "https://xiaohanys-danmuku.hf.space/douban_id?douban_id=36481469&episode_number=1"
 ```
 
 ### 2. 通过标题搜索获取弹幕
 
 ```
-GET /danmu/by_title
+GET /title
 ```
 
 **参数:**
@@ -84,13 +84,13 @@ GET /danmu/by_title
 **示例:**
 
 ```bash
-curl "http://localhost:8000/danmu/by_title?title=电视剧名称&season_number=1&episode_number=1"
+curl "https://xiaohanys-danmuku.hf.space/title?title=子夜归&season_number=1&episode_number=1&season=true"
 ```
 
 ### 3. 通过 URL 直接获取弹幕
 
 ```
-GET /danmu/by_url
+GET /url
 ```
 
 **参数:**
@@ -100,19 +100,7 @@ GET /danmu/by_url
 **示例:**
 
 ```bash
-curl "http://localhost:8000/danmu/by_url?url=https://www.bilibili.com/video/BV1234567890"
-```
-
-### 4. 健康检查
-
-```
-GET /health
-```
-
-**示例:**
-
-```bash
-curl "http://localhost:8000/health"
+curl "https://xiaohanys-danmuku.hf.space/url?url=https://v.qq.com/x/cover/mzc002009y0nzq8/z4101m43ng6.html"
 ```
 
 ## 响应格式
@@ -126,8 +114,7 @@ curl "http://localhost:8000/health"
   "danmu_data": 13223,
   "danmuku": [
     [0.0, "right", "#FFFFFF", "25px", "恭迎师祖出山"],
-    [0.0, "right", "#FFFFFF", "25px", "来支持献鱼啦"],
-    ...
+    [0.0, "right", "#FFFFFF", "25px", "来支持献鱼啦"]
   ]
 }
 ```
@@ -135,10 +122,7 @@ curl "http://localhost:8000/health"
 ### 错误响应
 
 ```json
-{
-  "code": -1,
-  "msg": "错误信息"
-}
+{ "error": "douban_id is required" }
 ```
 
 ## 许可证
