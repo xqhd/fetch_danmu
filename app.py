@@ -22,6 +22,9 @@ app = Robyn(
         ),
     ),
 )
+
+app.add_response_header("content-type", "application/json")
+
 ALLOW_CORS(app, origins=["*"])
 
 
