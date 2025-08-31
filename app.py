@@ -73,7 +73,7 @@ async def danmu_by_douban_id(query_params: DoubanIdParams):
     douban_id = query_params.get("douban_id", "")
     episode_number = query_params.get("episode_number", "")
     all_danmu = []
-    if not douban_id or episode_number:
+    if not douban_id or not episode_number:
         return {"error": "douban_id and episode_number are required"}, {}, 400
     all_danmu = await get_danmu_by_id(douban_id, episode_number)
     return (
