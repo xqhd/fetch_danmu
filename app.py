@@ -71,51 +71,51 @@ async def danmu_by_url(query_params: UrlParams):
 async def danmu_by_douban_id(query_params: DoubanIdParams):
     """通过豆瓣ID直接获取弹幕"""
     douban_id = query_params.get("douban_id", "")
-    episode_number = query_params.get("episode_number", "1")
+    episode_number = query_params.get("episode_number", "")
     all_danmu = []
-    if douban_id:
-        all_danmu = await get_danmu_by_id(douban_id, episode_number)
-        return (
-            {
-                "code": 0,
-                "name": douban_id,
-                "danmu_data": len(all_danmu),
-                "danmuku": all_danmu,
-            },
-            {},
-            200,
-        )
-    else:
-        return {"error": "douban_id is required"}, {}, 400
+    if not douban_id or episode_number:
+        return {"error": "douban_id and episode_number are required"}, {}, 400
+    all_danmu = await get_danmu_by_id(douban_id, episode_number)
+    return (
+        {
+            "code": 0,
+            "name": douban_id,
+            "danmu_data": len(all_danmu),
+            "danmuku": all_danmu,
+        },
+        {},
+        200,
+    )
 
 
 @app.get("title")
 async def danmu_by_title(query_params: TitleParams):
     """通过视频名称直接获取弹幕"""
     title = unquote_plus(query_params.get("title", ""), encoding="utf-8")
-    season_number = query_params.get("season_number", "1")
-    season = query_params.get("season", True)
-    if season == "false" or season == "False" or season == "0" or season == 0:
+    season_number = query_params.get("season_number", "")
+    season = query_params.get("season", "")
+    episode_number = query_params.get("episode_number", "")
+    if season == "False" or season == "false" or season == "0":
         season = False
     else:
         season = True
-    episode_number = query_params.get("episode_number", "1")
-    if title:
-        all_danmu = await get_danmu_by_title(
-            title, season_number, season, episode_number
-        )
+    if not title or not season_number or not episode_number or type(season) is not bool:
         return (
-            {
-                "code": 0,
-                "name": title,
-                "danmu_data": len(all_danmu),
-                "danmuku": all_danmu,
-            },
+            {"error": "title, season_number, episode_number and season are required"},
             {},
-            200,
+            400,
         )
-    else:
-        return {"error": "title is required"}, {}, 400
+    all_danmu = await get_danmu_by_title(title, season_number, season, episode_number)
+    return (
+        {
+            "code": 0,
+            "name": title,
+            "danmu_data": len(all_danmu),
+            "danmuku": all_danmu,
+        },
+        {},
+        200,
+    )
 
 
 if __name__ == "__main__":
