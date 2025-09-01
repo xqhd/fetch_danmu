@@ -18,4 +18,4 @@ ENV PATH="/home/user/.local/bin:$PATH"
 
 EXPOSE 8080
 
-CMD ["python3", "-m", "robyn", "app.py", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "app.py"]
