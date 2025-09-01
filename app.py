@@ -88,7 +88,7 @@ async def danmu_by_douban_id(query_params: DoubanIdParams):
     )
 
 
-@app.get("title")
+@app.get("/title")
 async def danmu_by_title(query_params: TitleParams):
     """通过视频名称直接获取弹幕"""
     title = unquote_plus(query_params.get("title", ""), encoding="utf-8")
