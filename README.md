@@ -19,34 +19,13 @@
 
 ## 快速开始
 
-### 环境要求
+### Docker 运行
 
-- Python 3.13
-- 依赖包详见 `requirements.txt`
+```bash
+docker run -d -p 8080:8080 --name fetch-danmu ghcr.io/seqcrafter/fetch-danmu:1.0.0
+```
 
-### 安装与运行
-
-1. **克隆仓库**
-
-   ```bash
-   git clone https://github.com/panxiaoguang/fetch_danmu.git
-   cd fetch_danmu
-   ```
-
-2. **安装依赖**
-
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-3. **启动服务**
-   ```bash
-   python3 -m robyn app.py --dev
-   ```
-
-服务将在 `http://127.0.0.1:8080` 启动，支持热重载。
+服务将在 `http://127.0.0.1:8080` 启动。
 
 ### API 文档
 
