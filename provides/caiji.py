@@ -1,4 +1,5 @@
 from curl_cffi import requests
+import re
 
 API_URL = "https://www.caiji.cyou/api.php/provide/vod/"
 
