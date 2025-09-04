@@ -28,7 +28,7 @@ def correct_episode_str(episode_str: str) -> int:
             return episode_num
         else:
             return -1
-    except (ValueError, TypeError) as e:
+    except (ValueError, TypeError):
         return -1
 
 
