@@ -12,6 +12,7 @@ from provides.doubai import (
     douban_select,
 )
 import asyncio
+from provides.caiji import get_vod_links_from_name
 
 
 ### url是官方视频播放链接
@@ -153,4 +154,24 @@ async def get_danmu_by_title(title, season_number, season, episode_number):
         all_danmu.extend(danmu_data)
     # 按时间排序
     all_danmu.sort(key=lambda x: x[0])
+    return all_danmu
+
+
+async def get_danmu_by_title_caiji(title: str, episode_number: int):
+    all_danmu = []
+    urls = await get_vod_links_from_name(title)
+    if not urls:
+        return all_danmu
+    ## 如果有多个来源，只要第一个
+    url_dict = {}
+    for _, urls in urls.items():
+        if urls:
+            url_dict = urls
+            break
+    if not url_dict:
+        return all_danmu
+
+    if episode_number in urls:
+        url = urls[episode_number]
+    all_danmu = await get_all_danmu(url)
     return all_danmu

@@ -5,7 +5,12 @@ from robyn.openapi import (
     Contact,
 )
 from robyn.robyn import QueryParams
-from functions import get_danmu_by_url, get_danmu_by_id, get_danmu_by_title
+from functions import (
+    get_danmu_by_url,
+    get_danmu_by_id,
+    get_danmu_by_title,
+    get_danmu_by_title_caiji,
+)
 from urllib.parse import unquote_plus
 
 
@@ -57,7 +62,7 @@ async def danmu_by_url(query_params: UrlParams):
             {
                 "code": 0,
                 "name": url,
-                "danmu_data": len(danmu_data),
+                "danmu": len(danmu_data),
                 "danmuku": danmu_data,
             },
             {},
@@ -80,7 +85,7 @@ async def danmu_by_douban_id(query_params: DoubanIdParams):
         {
             "code": 0,
             "name": douban_id,
-            "danmu_data": len(all_danmu),
+            "danmu": len(all_danmu),
             "danmuku": all_danmu,
         },
         {},
@@ -110,7 +115,40 @@ async def danmu_by_title(query_params: TitleParams):
         {
             "code": 0,
             "name": title,
-            "danmu_data": len(all_danmu),
+            "danmu": len(all_danmu),
+            "danmuku": all_danmu,
+        },
+        {},
+        200,
+    )
+
+
+@app.get("/test/title")
+async def danmu_by_title_caiji(query_params: TitleParams):
+    """通过视频名称直接获取弹幕"""
+    title = unquote_plus(query_params.get("title", ""), encoding="utf-8")
+    season_number = query_params.get("season_number", "1")
+    season = query_params.get("season", "")
+    episode_number = query_params.get("episode_number", "")
+    if season == "False" or season == "false" or season == "0":
+        season = False
+    else:
+        season = True
+    if not title or not season_number or not episode_number or type(season) is not bool:
+        return (
+            {"error": "title, season_number, episode_number and season are required"},
+            {},
+            400,
+        )
+    if season:
+        all_danmu = await get_danmu_by_title_caiji(title, int(episode_number))
+    else:
+        all_danmu = await get_danmu_by_title_caiji(title, 1)
+    return (
+        {
+            "code": 0,
+            "name": title,
+            "danmu": len(all_danmu),
             "danmuku": all_danmu,
         },
         {},
