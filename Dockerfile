@@ -46,4 +46,4 @@ COPY --chown=user:user . .
 EXPOSE 8080
 
 # 启动命令
-CMD ["python", "app.py"]
+CMD ["python3", "-m", "robyn", "app.py", "--fast", "--log-level", "INFO"]
