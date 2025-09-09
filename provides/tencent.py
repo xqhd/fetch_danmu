@@ -17,7 +17,7 @@ async def get_link(url, client: requests.AsyncSession = None) -> List[str]:
     if vid:
         vid = vid[-1]
     if not vid:
-        vid = re.search("/([a-zA-Z0-9]+)\\.html", url)
+        vid = re.search(r"/([a-zA-Z0-9]+)\.html", url)
         if vid:
             vid = vid.group(1)
     if not vid:
@@ -79,7 +79,7 @@ async def read_barrage(
     return barrage_list
 
 
-async def get_tencent_danmu(url: str):
+async def get_tencent_danmu(url: str) -> list[dict]:
     danmu_list = []
     if "v.qq.com" in url:
         async with requests.AsyncSession() as client:
@@ -98,7 +98,7 @@ async def get_tencent_episode_url(url: str) -> dict[str, str]:
             if vid:
                 vid = vid[-1]
             if not vid:
-                vid = re.search("/([a-zA-Z0-9]+)\.html", url)
+                vid = re.search(r"/([a-zA-Z0-9]+)\.html", url)
                 if vid:
                     vid = vid.group(1)
             cid = re.findall('"cid":"(.*?)"', res.text)[0]

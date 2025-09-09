@@ -8,6 +8,7 @@ from functools import reduce
 import asyncio
 import provides.bilibili.bilibilidm_pb2 as Danmaku
 from provides.utils import int_to_hex_color
+from typing import Dict, Any
 # import bilibilidm_pb2 as Danmaku
 
 mixinKeyEncTab = [
@@ -97,12 +98,12 @@ async def getWbiKeys() -> tuple[str, str]:
         return img_key, sub_key
 
 
-def getMixinKey(orig: str):
+def getMixinKey(orig: str) -> str:
     "对 imgKey 和 subKey 进行字符顺序打乱编码"
     return reduce(lambda s, i: s + orig[i], mixinKeyEncTab, "")[:32]
 
 
-def encWbi(params: dict, img_key: str, sub_key: str):
+def encWbi(params: dict, img_key: str, sub_key: str) -> Dict[str, Any]:
     "为请求参数进行 wbi 签名"
     mixin_key = getMixinKey(img_key + sub_key)
     curr_time = round(time.time())
@@ -119,11 +120,11 @@ def encWbi(params: dict, img_key: str, sub_key: str):
     return params
 
 
-async def get_link(url, client: requests.AsyncSession = None) -> List[str]:
+async def get_link(url: str, client: requests.AsyncSession = None) -> List[str]:
     api_epid_cid = "https://api.bilibili.com/pgc/view/web/season"
     img_key, sub_key = await getWbiKeys()
     if url.find("bangumi/") != -1 and url.find("ep") != -1:
-        epid_matches = re.findall("ep(\d+)", url)
+        epid_matches = re.findall(r"ep(\d+)", url)
         if not epid_matches:
             print("无法从URL中提取epid")
             return []
@@ -157,7 +158,7 @@ async def get_link(url, client: requests.AsyncSession = None) -> List[str]:
         return []
 
 
-def parse_data(data):
+def parse_data(data) -> List[Dict[str, Any]]:
     barrage_list = []
     for elem in data.elems:
         parsed_data = {}
@@ -186,14 +187,16 @@ def decompress_data(content):
     return danmaku_seg
 
 
-async def fetch_single_barrage(url, client: requests.AsyncSession) -> List[dict]:
+async def fetch_single_barrage(
+    url: str, client: requests.AsyncSession
+) -> List[dict[str, Any]]:
     res = await client.get(url, impersonate="chrome110")
     return parse_data(decompress_data(res.content))
 
 
 async def read_barrage(
     urls: List[str], client: requests.AsyncSession = None
-) -> List[dict]:
+) -> List[dict[str, Any]]:
     tasks = [fetch_single_barrage(url, client=client) for url in urls]
     results = await asyncio.gather(*tasks)
     barrage_list = []
@@ -202,7 +205,7 @@ async def read_barrage(
     return barrage_list
 
 
-async def get_bilibili_danmu(url: str):
+async def get_bilibili_danmu(url: str) -> List[Dict[str, Any]]:
     danmu_list = []
     if "bilibili.com" in url:
         async with requests.AsyncSession() as client:
@@ -211,7 +214,7 @@ async def get_bilibili_danmu(url: str):
     return danmu_list
 
 
-async def get_bilibili_episode_url(url: str):
+async def get_bilibili_episode_url(url: str) -> Dict[str, str]:
     url_dict = {}
     if "bilibili.com" in url:
         api_epid_cid = "https://api.bilibili.com/pgc/view/web/season"

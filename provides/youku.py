@@ -1,15 +1,14 @@
 import re
-from typing import List
+from typing import List, Optional
 from curl_cffi import requests
 import time
 import base64
 import json
 import hashlib
 import asyncio  # 新增
-import parsel
 
 
-async def get_cna(client):
+async def get_cna(client: requests.AsyncSession) -> None:
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
     }
@@ -17,7 +16,7 @@ async def get_cna(client):
     await client.get(url, headers=headers)
 
 
-async def get_tk_enc(client):
+async def get_tk_enc(client: requests.AsyncSession) -> bool:
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
     }
@@ -30,7 +29,7 @@ async def get_tk_enc(client):
     return False
 
 
-async def create_client():
+async def create_client() -> requests.AsyncSession:
     client = requests.AsyncSession()
     client.headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36"
@@ -40,7 +39,7 @@ async def create_client():
     return client
 
 
-async def get_vinfos_by_video_id(client, video_id):
+async def get_vinfos_by_video_id(client: requests.AsyncSession, video_id: str) -> float:
     url = "https://openapi.youku.com/v2/videos/show.json"
     params = {
         "client_id": "53e6cc67237fc59a",
@@ -56,20 +55,20 @@ async def get_vinfos_by_video_id(client, video_id):
     return res.json().get("duration")
 
 
-def get_msg_sign(msg_base64):
+def get_msg_sign(msg_base64: str) -> str:
     secret_key = "MkmC9SoIw6xCkSKHhJ7b5D2r51kBiREr"
     combined_msg = msg_base64 + secret_key
     hash_object = hashlib.md5(combined_msg.encode())
     return hash_object.hexdigest()
 
 
-def yk_t_sign(token, t, appkey, data):
+def yk_t_sign(token: str, t: str, appkey: str, data: str) -> str:
     text = "&".join([token, t, appkey, data])
     md5_hash = hashlib.md5(text.encode())
     return md5_hash.hexdigest()
 
 
-async def get_vid_list(client, url) -> List:
+async def get_vid_list(client: requests.AsyncSession, url: str) -> List[dict[str, str]]:
     if "vid=" in url:
         # 从URL参数中提取vid
         vid_match = re.search(r"vid=([^&=]+)", url)
@@ -96,7 +95,7 @@ async def get_vid_list(client, url) -> List:
     return all_params
 
 
-def parse_data(data):
+def parse_data(data: dict) -> list[dict]:
     barrage_list = []
     result = json.loads(data.get("data", {}).get("result", {}))
     if result.get("code", "-1") == "-1":
@@ -121,7 +120,9 @@ def parse_data(data):
     return barrage_list
 
 
-async def fetch_single_barrage(client, params):
+async def fetch_single_barrage(
+    client: requests.AsyncSession, params: dict[str, str]
+) -> Optional[dict]:
     """获取单个时间段的弹幕"""
     try:
         video_id = params.get("vid")
@@ -191,7 +192,9 @@ async def fetch_single_barrage(client, params):
         return None
 
 
-async def read_barrage(client, params):
+async def read_barrage(
+    client: requests.AsyncSession, params: list[dict[str, str]]
+) -> list[dict]:
     barrage_list = []
 
     # 并发获取所有分段弹幕
@@ -203,7 +206,7 @@ async def read_barrage(client, params):
     return barrage_list
 
 
-async def get_youku_danmu(url: str):
+async def get_youku_danmu(url: str) -> list[dict]:
     danmu_list = []
     if "youku.com" in url:
         async with requests.AsyncSession() as client:
@@ -221,15 +224,17 @@ async def get_youku_episode_url(url: str) -> dict[str, str]:
     if "youku.com" in url:
         async with requests.AsyncSession() as client:
             res = await client.get(url)
-            selector = parsel.Selector(res.text)
             url_dict = {}
-            for item in selector.css(".anthology-container .box-anthology-items > a"):
-                url = item.css("::attr(href)").extract_first()
-                title_str = item.css("::attr(aria-label)").extract_first()
-                title = re.findall(r"\d+", title_str)
-                if len(title) == 0:
-                    continue
-                url_dict[title[0]] = url
+            data = re.search(
+                r"window\.__INITIAL_DATA__\s*=\s*({[\s\S]*?});", res.text
+            ).group(1)
+            json_data = json.loads(data)
+            for item in json_data.get("moduleList", [{}])[0].get("components", []):
+                if item.get("type") == 10013:
+                    for d in item.get("itemList", []):
+                        rank = d.get("stage")
+                        url = f"https://v.youku.com/v_show/id_{d.get('action_value')}.html"
+                        url_dict[rank] = url
             return url_dict
     return {}
 

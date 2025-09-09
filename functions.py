@@ -13,45 +13,46 @@ from provides.doubai import (
 )
 import asyncio
 from provides.caiji import get_vod_links_from_name
+from typing import List, Dict, Optional, Any
 
 
 ### url是官方视频播放链接
-async def get_all_danmu(url):
-    """使用异步并行执行所有平台获取弹幕"""
-    tasks = [
-        get_tencent_danmu(url),
-        get_youku_danmu(url),
-        get_iqiyi_danmu(url),
-        get_bilibili_danmu(url),
-        get_mgtv_danmu(url),
-        get_souhu_danmu(url),
-    ]
-
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-    # 合并所有非空结果和非异常结果
+async def get_all_danmu(url: str) -> List[List[Any]]:
     all_danmu = []
-    for result in results:
-        if isinstance(result, Exception):
-            continue  # 忽略异常结果
-        if result:
-            all_danmu.extend(
-                [
-                    [
-                        item["time"],
-                        item["position"],
-                        item["color"],
-                        item["size"],
-                        item["text"],
-                    ]
-                    for item in result
-                ]
-            )
+    """使用异步并行执行所有平台获取弹幕"""
+    if "mgtv.com" in url:
+        results = await get_mgtv_danmu(url)
+    elif "v.qq.com" in url:
+        results = await get_tencent_danmu(url)
+    elif "youku.com" in url:
+        results = await get_youku_danmu(url)
+    elif "iqiyi.com" in url:
+        results = await get_iqiyi_danmu(url)
+    elif "bilibili.com" in url:
+        results = await get_bilibili_danmu(url)
+    elif "tv.sohu.com" in url:
+        results = await get_souhu_danmu(url)
+    else:
+        results = []
+    if not results:
+        return all_danmu
+
+    all_danmu = [
+        [
+            item["time"],
+            item["position"],
+            item["color"],
+            item["size"],
+            item["text"],
+        ]
+        for item in results
+    ]
     return all_danmu
 
 
 ### 这里使用官方链接中的第一个链接，在官方网页中获取该视频的所有链接
 ### 每个平台都有自己的方法，该方法主要用于根据视频名称查询
-async def get_episode_url(platform_url_list):
+async def get_episode_url(platform_url_list: List[str]) -> Dict[str, List[str]]:
     """获取所有剧集链接"""
     url_dict = {}
     for platform_url in platform_url_list:
@@ -79,7 +80,7 @@ async def get_episode_url(platform_url_list):
     return url_dict
 
 
-async def get_platform_urls_by_id(douban_id):
+async def get_platform_urls_by_id(douban_id: str) -> Dict[str, List[str]]:
     """获取豆瓣对应的平台链接"""
     platform_urls = await douban_get_first_url(douban_id)
     platform_url_list = other2http(platform_urls)
@@ -89,7 +90,7 @@ async def get_platform_urls_by_id(douban_id):
     return url_dict
 
 
-async def get_platform_urls_by_title(title, season_number, season):
+async def get_platform_urls_by_title(title: str, season_number: Optional[str], season: bool) -> Dict[str, List[str]]:
     ### 首选查询 360 网站
     ### title 是视频名称
     ### season_number 是季数
@@ -116,14 +117,14 @@ async def get_platform_urls_by_title(title, season_number, season):
     return url_dict
 
 
-async def get_danmu_by_url(url):
+async def get_danmu_by_url(url: str) -> List[List[Any]]:
     danmu_data = await get_all_danmu(url)
     # 按时间排序
     danmu_data.sort(key=lambda x: x[0])
     return danmu_data
 
 
-async def get_danmu_by_id(id, episode_number):
+async def get_danmu_by_id(id: str, episode_number: str) -> List[List[Any]]:
     all_danmu = []
     urls = await get_platform_urls_by_id(id)
     if not urls:
@@ -140,7 +141,7 @@ async def get_danmu_by_id(id, episode_number):
     return all_danmu
 
 
-async def get_danmu_by_title(title, season_number, season, episode_number):
+async def get_danmu_by_title(title: str, season_number: Optional[str], season: bool, episode_number: str) -> List[List[Any]]:
     all_danmu = []
     urls = await get_platform_urls_by_title(title, season_number, season)
     if not urls:
@@ -157,7 +158,7 @@ async def get_danmu_by_title(title, season_number, season, episode_number):
     return all_danmu
 
 
-async def get_danmu_by_title_caiji(title: str, episode_number: int):
+async def get_danmu_by_title_caiji(title: str, episode_number: int) -> List[List[Any]]:
     all_danmu = []
     urls = await get_vod_links_from_name(title)
     if not urls:
@@ -171,7 +172,7 @@ async def get_danmu_by_title_caiji(title: str, episode_number: int):
     if not url_dict:
         return all_danmu
 
-    if episode_number in urls:
-        url = urls[episode_number]
+    if episode_number in url_dict:
+        url = url_dict[episode_number]
     all_danmu = await get_all_danmu(url)
     return all_danmu

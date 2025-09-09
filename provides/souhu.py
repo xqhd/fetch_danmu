@@ -5,7 +5,7 @@ import re
 import json
 
 
-async def get_link(client, url) -> List:
+async def get_link(client: requests.AsyncSession, url: str) -> List[str]:
     res = await client.get(url, impersonate="chrome124")
     vid_matches = re.findall('vid="(.*?)";', res.text)
     if not vid_matches:
@@ -19,7 +19,7 @@ async def get_link(client, url) -> List:
     return [base_url % (i * 300, (i + 1) * 300) for i in range(0, 20)]
 
 
-def parse(data):
+def parse(data: dict) -> list[dict]:
     data_list = []
     for d in data.get("info", {}).get("comments", []):
         parsed_data = {}
@@ -34,12 +34,12 @@ def parse(data):
     return data_list
 
 
-async def fetch_single_barrage(client, param):
+async def fetch_single_barrage(client: requests.AsyncSession, param: str) -> list[dict]:
     res = await client.get(param, impersonate="chrome124")
     return parse(res.json())
 
 
-async def read_barrage(client, urls):
+async def read_barrage(client: requests.AsyncSession, urls: list[str]) -> list[dict]:
     tasks = [fetch_single_barrage(client, url) for url in urls]
     results = await asyncio.gather(*tasks)
     barrage_list = []
@@ -48,7 +48,7 @@ async def read_barrage(client, urls):
     return barrage_list
 
 
-async def get_souhu_danmu(url: str):
+async def get_souhu_danmu(url: str) -> list[dict]:
     danmu_list = []
     if "tv.sohu.com" in url:
         async with requests.AsyncSession() as client:
@@ -57,7 +57,7 @@ async def get_souhu_danmu(url: str):
     return danmu_list
 
 
-async def get_souhu_episode_url(url):
+async def get_souhu_episode_url(url: str) -> dict[str, str]:
     if "tv.sohu.com" in url:
         async with requests.AsyncSession() as client:
             _res = await client.get(url, impersonate="chrome124")

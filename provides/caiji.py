@@ -1,10 +1,11 @@
 from curl_cffi import requests
+from typing import Optional
 import re
 
 API_URL = "https://www.caiji.cyou/api.php/provide/vod/"
 
 
-async def get_id(vod_name: str, client: requests.AsyncSession):
+async def get_id(vod_name: str, client: requests.AsyncSession) -> Optional[int]:
     params = {
         "ac": "list",
         "wd": vod_name,
@@ -32,7 +33,7 @@ def correct_episode_str(episode_str: str) -> int:
         return -1
 
 
-async def get_vod_urls(vod_id: int, client: requests.AsyncSession):
+async def get_vod_urls(vod_id: int, client: requests.AsyncSession) -> Optional[dict[str, dict[int, str]]]:
     params = {
         "ac": "detail",
         "ids": vod_id,
@@ -65,7 +66,7 @@ async def get_vod_urls(vod_id: int, client: requests.AsyncSession):
     return vod_links
 
 
-async def get_vod_links_from_name(vod_name: str):
+async def get_vod_links_from_name(vod_name: str) -> Optional[dict[str, dict[int, str]]]:
     vod_links = {}
     async with requests.AsyncSession() as client:
         vod_id = await get_id(vod_name, client)

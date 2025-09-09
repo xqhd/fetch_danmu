@@ -47,7 +47,7 @@ async def get_link(url, client: requests.AsyncSession = None) -> List[str]:
     return url_list
 
 
-def parse_data(data):
+def parse_data(data: list) -> list[dict]:
     barrage_list = []
     for entry in data:
         for item in entry.bulletInfo:
@@ -62,14 +62,14 @@ def parse_data(data):
     return barrage_list
 
 
-def decompress_data(content):
+def decompress_data(content: bytes) -> list:
     out = brotli.decompress(content)
     danmu = Iqiyidm_pb2.Danmu()
     danmu.ParseFromString(out)
     return danmu.entry
 
 
-async def fetch_single_barrage(client: requests.AsyncSession, url: str):
+async def fetch_single_barrage(client: requests.AsyncSession, url: str) -> list[dict]:
     try:
         res = await client.get(url, headers=base_headers, impersonate="chrome124")
         return parse_data(decompress_data(res.content))
@@ -92,7 +92,7 @@ async def read_barrage(
     return barrage_list
 
 
-async def get_iqiyi_danmu(url: str):
+async def get_iqiyi_danmu(url: str) -> list[dict]:
     danmu_list = []
     if "iqiyi.com" in url:
         async with requests.AsyncSession() as client:
@@ -101,7 +101,7 @@ async def get_iqiyi_danmu(url: str):
     return danmu_list
 
 
-async def get_iqiyi_episode_url(url: str):
+async def get_iqiyi_episode_url(url: str) -> dict[str, str]:
     from lib.utils import resolve_url_query
     from jsonpath_ng import parse
 

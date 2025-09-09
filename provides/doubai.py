@@ -5,7 +5,7 @@ import cn2an
 from typing import Optional
 
 
-async def get_platform_link(douban_id):
+async def get_platform_link(douban_id: str) -> dict[str, list[str]]:
     async with requests.AsyncSession() as client:
         res = await client.get(
             f"https://movie.douban.com/subject/{douban_id}/",
@@ -14,7 +14,7 @@ async def get_platform_link(douban_id):
             },
         )
     urls = re.findall(
-        r'https://www.douban.com/link2/\?url=(.*?)",.+ep:.+"(.*?)"', res.text
+        r'https://www\.douban\.com/link2/\?url=(.*?)",.+ep:.+"(.*?)"', res.text
     )
     url_dict = {}
     for url in urls:
@@ -26,7 +26,7 @@ async def get_platform_link(douban_id):
     return url_dict
 
 
-async def douban_select(name: str, tv_num: Optional[str] = None):
+async def douban_select(name: str, tv_num: Optional[str] = None) -> Optional[dict]:
     if tv_num is None:
         tv_num = "一"
     else:
@@ -88,7 +88,7 @@ async def douban_select(name: str, tv_num: Optional[str] = None):
                 return i
 
 
-async def douban_get_first_url(target_id):
+async def douban_get_first_url(target_id: str) -> list[str]:
     url = f"https://frodo.douban.com/api/v2/tv/{target_id}?apiKey=0ac44ae016490db2204ce0a042db2916"
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 MicroMessenger/7.0.20.1781(0x6700143B) NetType/WIFI MiniProgramEnv/Windows WindowsWechat/WMPF WindowsWechat(0x63090c33)XWEB/11581",
@@ -115,7 +115,7 @@ async def douban_get_first_url(target_id):
 
 async def select_by_360(
     name: str, tv_num: Optional[str] = None, season: Optional[bool] = False
-):
+) -> Optional[dict]:
     if tv_num is None:
         tv_num = "一"
     else:

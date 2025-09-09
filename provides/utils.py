@@ -25,7 +25,7 @@ def other2http(platform_url_list: List[str]):
     return ret_list
 
 
-def int_to_hex_color(decimal):
+def int_to_hex_color(decimal: int) -> str:
     # 将十进制数转换为 6 位十六进制字符串，去掉 '0x' 前缀，补齐 6 位
     hex_str = f"{decimal:06X}"
     # 确保输出长度为 6（若输入过大，截取最后 6 位）

@@ -3,7 +3,7 @@ from typing import List, Optional
 from curl_cffi import requests
 
 
-def time_to_second(time: list):
+def time_to_second(time: list[str]) -> int:
     s = 0
     m = 1
     for d in time[::-1]:
@@ -12,7 +12,7 @@ def time_to_second(time: list):
     return s
 
 
-async def get_link(client, url) -> List[str]:
+async def get_link(client: requests.AsyncSession, url: str) -> List[str]:
     api_video_info = "https://pcweb.api.mgtv.com/video/info"
     api_danmaku = "https://galaxy.bz.mgtv.com/rdbarrage"
     _u = url.split(".")[-2].split("/")
@@ -36,7 +36,7 @@ async def get_link(client, url) -> List[str]:
     ]
 
 
-def parse_data(data):
+def parse_data(data: dict) -> list[dict]:
     barrage_list = []
     if data.get("data", {}).get("items", []) is None:
         return []
@@ -53,12 +53,12 @@ def parse_data(data):
     return barrage_list
 
 
-async def fetch_single_barrage(client, param):
+async def fetch_single_barrage(client: requests.AsyncSession, param: str) -> list[dict]:
     res = await client.get(param)
     return parse_data(res.json())
 
 
-async def read_barrage(client, params):
+async def read_barrage(client: requests.AsyncSession, params: list[str]) -> list[dict]:
     tasks = [fetch_single_barrage(client, param) for param in params]
     results = await asyncio.gather(*tasks)
     barrage_list = []
@@ -68,7 +68,7 @@ async def read_barrage(client, params):
     return barrage_list
 
 
-async def get_mgtv_danmu(url: str):
+async def get_mgtv_danmu(url: str) -> list[dict]:
     danmu_list = []
     if "mgtv.com" in url:
         async with requests.AsyncSession() as client:
