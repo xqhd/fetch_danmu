@@ -16,6 +16,33 @@ from provides.caiji import get_vod_links_from_name
 from typing import List, Dict, Optional, Any
 
 
+def deduplicate_danmu(danmu_list: List[List[Any]]) -> List[List[Any]]:
+    if not danmu_list:
+        return danmu_list
+
+    # 使用字典来存储每个text对应的最早弹幕
+    seen_texts = {}
+    deduplicated = []
+
+    for danmu in danmu_list:
+        text = danmu[4]  # text是第5个元素，索引为4
+        time = danmu[0]  # time是第1个元素，索引为0
+
+        if text not in seen_texts:
+            seen_texts[text] = len(deduplicated)
+            deduplicated.append(danmu)
+        else:
+            # 如果当前弹幕时间更早，替换已存储的弹幕
+            existing_idx = seen_texts[text]
+            if time < deduplicated[existing_idx][0]:
+                deduplicated[existing_idx] = danmu
+
+    # 按时间重新排序（因为可能有替换操作）
+    deduplicated.sort(key=lambda x: x[0])
+
+    return deduplicated
+
+
 ### url是官方视频播放链接
 async def get_all_danmu(url: str) -> List[List[Any]]:
     all_danmu = []
@@ -90,7 +117,9 @@ async def get_platform_urls_by_id(douban_id: str) -> Dict[str, List[str]]:
     return url_dict
 
 
-async def get_platform_urls_by_title(title: str, season_number: Optional[str], season: bool) -> Dict[str, List[str]]:
+async def get_platform_urls_by_title(
+    title: str, season_number: Optional[str], season: bool
+) -> Dict[str, List[str]]:
     ### 首选查询 360 网站
     ### title 是视频名称
     ### season_number 是季数
@@ -121,6 +150,8 @@ async def get_danmu_by_url(url: str) -> List[List[Any]]:
     danmu_data = await get_all_danmu(url)
     # 按时间排序
     danmu_data.sort(key=lambda x: x[0])
+    # 去重复
+    danmu_data = deduplicate_danmu(danmu_data)
     return danmu_data
 
 
@@ -138,10 +169,14 @@ async def get_danmu_by_id(id: str, episode_number: str) -> List[List[Any]]:
         all_danmu.extend(danmu_data)
     # 按时间排序
     all_danmu.sort(key=lambda x: x[0])
+    # 去重复
+    all_danmu = deduplicate_danmu(all_danmu)
     return all_danmu
 
 
-async def get_danmu_by_title(title: str, season_number: Optional[str], season: bool, episode_number: str) -> List[List[Any]]:
+async def get_danmu_by_title(
+    title: str, season_number: Optional[str], season: bool, episode_number: str
+) -> List[List[Any]]:
     all_danmu = []
     urls = await get_platform_urls_by_title(title, season_number, season)
     if not urls:
@@ -155,6 +190,8 @@ async def get_danmu_by_title(title: str, season_number: Optional[str], season: b
         all_danmu.extend(danmu_data)
     # 按时间排序
     all_danmu.sort(key=lambda x: x[0])
+    # 去重复
+    all_danmu = deduplicate_danmu(all_danmu)
     return all_danmu
 
 
@@ -175,4 +212,6 @@ async def get_danmu_by_title_caiji(title: str, episode_number: int) -> List[List
     if episode_number in url_dict:
         url = url_dict[episode_number]
     all_danmu = await get_all_danmu(url)
+    # 去重复
+    all_danmu = deduplicate_danmu(all_danmu)
     return all_danmu
