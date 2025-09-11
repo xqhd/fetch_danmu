@@ -1,18 +1,18 @@
-from provides.bilibili.bilibili import get_bilibili_danmu, get_bilibili_episode_url
-from provides.iqiyi.iqiyi import get_iqiyi_danmu, get_iqiyi_episode_url
-from provides.mgtv import get_mgtv_danmu, get_mgtv_episode_url
-from provides.souhu import get_souhu_danmu, get_souhu_episode_url
-from provides.tencent import get_tencent_danmu, get_tencent_episode_url
-from provides.youku import get_youku_danmu, get_youku_episode_url
-from provides.utils import other2http
-from provides.doubai import (
+from .provides.bilibili.bilibili import get_bilibili_danmu, get_bilibili_episode_url
+from .provides.iqiyi.iqiyi import get_iqiyi_danmu, get_iqiyi_episode_url
+from .provides.mgtv import get_mgtv_danmu, get_mgtv_episode_url
+from .provides.souhu import get_souhu_danmu, get_souhu_episode_url
+from .provides.tencent import get_tencent_danmu, get_tencent_episode_url
+from .provides.youku import get_youku_danmu, get_youku_episode_url
+from .provides.utils import other2http
+from .provides.doubai import (
     get_platform_link,
     douban_get_first_url,
     select_by_360,
     douban_select,
 )
 import asyncio
-from provides.caiji import get_vod_links_from_name
+from .provides.caiji import get_vod_links_from_name
 from typing import List, Dict, Optional, Any
 
 

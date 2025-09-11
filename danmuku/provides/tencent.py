@@ -48,7 +48,7 @@ def parse_data(data: dict) -> List[dict]:
         # parsed_data["style"] = {}
         if item.get("content_style") != "":
             content_style = json.loads(item.get("content_style"))
-            parsed_data["color"] = content_style.get("color", "#ffffff")
+            parsed_data["color"] = f"#{content_style.get('color', 'ffffff')}"
         barrage_list.append(parsed_data)
     return barrage_list
 

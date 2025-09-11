@@ -1,15 +1,10 @@
 # 弹幕获取 API (Danmu Fetch API)
 
-鉴于 Robyn 远强于 Fastapi，所以重新用 Robyn 实现接口服务
-
-![](https://private-user-images.githubusercontent.com/29942790/291895825-4a2bba61-24e7-4ee2-8884-19b40204bfcd.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTY1ODA2MTMsIm5iZiI6MTc1NjU4MDMxMywicGF0aCI6Ii8yOTk0Mjc5MC8yOTE4OTU4MjUtNGEyYmJhNjEtMjRlNy00ZWUyLTg4ODQtMTliNDAyMDRiZmNkLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA4MzAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwODMwVDE4NTgzM1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTFhNWRkZmEyODU2YjYyOTBkMGEyMGRjMDEyYzBjODZlN2NhN2E3ZDRlZjc4N2FkYmU0ZmJkNDYxNzgwNzhmNWUmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.qijSGRsTdKf0YOWmC5j51s3TZRqkEzn2M68VMwEO-AM)
-
----
-
-一个基于 [Robyn](https://github.com/sparckles/Robyn) 的异步弹幕聚合服务，支持从多个主流视频平台获取弹幕数据，具体支持的平台请看`provides`文件目录，返回用于[weizhenye/Danmaku](https://github.com/weizhenye/Danmaku)的弹幕数据。
+一个基于 [Fastapi](https://github.com/tiangolo/fastapi) 的异步弹幕聚合服务，支持从多个主流视频平台获取弹幕数据，具体支持的平台请看`provides`文件目录，返回用于[weizhenye/Danmaku](https://github.com/weizhenye/Danmaku)的弹幕数据。
 
 ## 功能特性
 
+- 🌐 **UI 界面**: 支持通过 UI 界面获取弹幕数据，基于[reflex](https://github.com/reflex-dev/reflex)实现
 - 🚀 **异步并行处理**: 使用 asyncio 并行获取多平台弹幕，提高响应速度
 - 🔍 **多种获取方式**: 支持豆瓣 ID、标题搜索和直接 URL 三种弹幕获取方式
 - 🎯 **平台聚合**: 一次请求获取所有支持平台的弹幕数据
@@ -22,7 +17,7 @@
 ### Docker 运行
 
 ```bash
-docker run -d -p 8080:8080 --name fetch-danmu ghcr.io/seqcrafter/fetch-danmu:1.1.2
+docker run -d -p 8080:8080 --name fetch-danmu ghcr.io/seqcrafter/fetch-danmu:2.0.0
 ```
 
 服务将在 `http://127.0.0.1:8080` 启动。
@@ -54,6 +49,25 @@ curl "http://127.0.0.1:8080/douban_id?douban_id=36481469&episode_number=1"
 ```
 
 ### 2. 通过标题搜索获取弹幕
+
+**新增一个测试接口用来为魔改版 zyplayer 提供弹幕数据**
+
+```
+GET /test/title
+```
+
+**参数:**
+
+- `title` (必需): 视频标题
+- `season_number` (可选): 季数，默认为 1
+- `season` (可选): 是否是连续剧，默认为 True，电视剧选 True，电影选 False
+- `episode_number` (可选): 集数
+
+**示例:**
+
+```bash
+curl "http://127.0.0.1:8080/test/title?title=子夜归&season_number=1&episode_number=1&season=true"
+```
 
 ```
 GET /title
