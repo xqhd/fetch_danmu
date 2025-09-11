@@ -15,13 +15,13 @@ class PreviewState(rx.State):
 
     @rx.event
     def get_code(self) -> None:
-        current_host = self.router.url.origin
         schema = self.router.url.scheme
         if schema == "https":
             ## using domain
-            current_host = self.router.url.domain
+            current_host = self.router.url.origin
         else:
-            backend_host = re.sub(r":\d+", ":8080", current_host)
+            origin = self.router.url.origin
+            backend_host = re.sub(r":\d+", ":8080", origin)
             current_host = backend_host
         self.code = f"curl {current_host}/api/url?url={self.rq_url}"
         self.show_code = True
