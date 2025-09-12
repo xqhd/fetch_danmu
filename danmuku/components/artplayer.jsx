@@ -113,15 +113,15 @@ const ArtPlayerWithDanmaku = ({
     // 默认弹幕配置
     const defaultDanmakuOptions = {
       danmuku: loadDanmakuData, // 使用异步函数加载弹幕
-      speed: 5, // 弹幕持续时间，范围在[1 ~ 10]
-      margin: [10, "25%"], // 弹幕上下边距，支持像素数字和百分比
+      speed: 7.5, // 弹幕持续时间，范围在[1 ~ 10]
+      margin: [10, "50%"], // 弹幕上下边距，支持像素数字和百分比
       opacity: 1, // 弹幕透明度，范围在[0 ~ 1]
       color: "#FFFFFF", // 默认弹幕颜色
       mode: 0, // 默认弹幕模式: 0: 滚动，1: 顶部，2: 底部
       modes: [0, 1, 2], // 弹幕可见的模式
-      fontSize: 25, // 弹幕字体大小
+      fontSize: 23, // 弹幕字体大小
       antiOverlap: true, // 弹幕是否防重叠
-      synchronousPlayback: false, // 是否同步播放速度
+      synchronousPlayback: true, // 是否同步播放速度
       heatmap: false, // 是否开启热力图
       width: 512, // 当播放器宽度小于此值时，弹幕发射器置于播放器底部
       filter: () => true, // 弹幕载入前的过滤器
@@ -182,6 +182,10 @@ const ArtPlayerWithDanmaku = ({
         // 添加弹幕插件
         artplayerPluginDanmuku(defaultDanmakuOptions),
       ],
+    });
+    artPlayerRef.current.on("artplayerPluginDanmuku:error", (error) => {
+      artPlayerRef.current.notice.show =
+        "弹幕加载失败,可能服务器被豆瓣封锁,请稍候尝试";
     });
     return () => {
       cleanupPlayer();

@@ -1,6 +1,6 @@
 import reflex as rx
 from ..template import template
-from ..provides.caiji import get_vod_details
+from ..provides.mtzy import get_vod_details
 from typing import Any, Dict, List
 
 
@@ -37,7 +37,7 @@ def single_episode_box(episode_number: str, episode_url: str) -> rx.Component:
             ),
             class_name="w-12 h-10 border border-gray-200 rounded-lg flex items-center justify-center bg-white hover:bg-red-50 hover:border-red-300 transition-all duration-200 group cursor-pointer shadow-sm hover:shadow-md",
         ),
-        href=f"/preview?url={episode_url}",
+        href=f"/preview?url={episode_url}&douban_id={DetailsState.vod_details['vod_douban_id']}&episode_number={episode_number}",
         class_name="group",
     )
 

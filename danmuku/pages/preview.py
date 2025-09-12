@@ -7,102 +7,6 @@ import os
 import asyncio
 import random
 
-proxies_poll = [
-    "http://139.170.229.46:443",
-    "http://39.185.41.193:5911",
-    "http://182.44.9.134:6666",
-    "http://211.143.79.108:3128",
-    "http://222.59.173.105:45090",
-]
-
-
-async def try_resolve_url(url: str, proxy_link: str = None) -> str:
-    resolve_url = "https://openapi.973973.xyz/open/api_free/index/?pltfrom=5010&url="
-    if proxy_link:
-        async with requests.AsyncSession(
-            proxy=proxy_link,
-        ) as client:
-            res = await client.get(
-                resolve_url + url,
-                impersonate="chrome124",
-                verify=False,
-                timeout=500,
-            )
-            if res.status_code != 200:
-                return None
-            data = res.json()
-            if data["code"] == 200:
-                print("解析成功！")
-                return data["url"]
-            else:
-                print("解析失败！")
-                return None
-    else:
-        async with requests.AsyncSession() as client:
-            res = await client.get(
-                resolve_url + url,
-                impersonate="chrome124",
-                verify=False,
-                timeout=5000,
-            )
-            if res.status_code != 200:
-                return None
-            data = res.json()
-            if data["code"] == 200:
-                print("解析成功！")
-                return data["url"]
-            else:
-                print("解析失败！")
-                return None
-
-
-async def get_resolved_play_url(url: str) -> str:
-    """
-    并行使用代理和不使用代理访问try_resolve_url，返回第一个成功的结果
-    如果都失败则返回None
-    """
-    # 随机选择一个代理
-    selected_proxy = random.choice(proxies_poll)
-
-    # 创建两个并行任务
-    tasks = [
-        asyncio.create_task(try_resolve_url(url, selected_proxy)),  # 使用代理
-        asyncio.create_task(try_resolve_url(url, None)),  # 不使用代理
-    ]
-
-    try:
-        # 并行执行任务，等待第一个完成的任务
-        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
-
-        # 取消还在运行的任务
-        for task in pending:
-            task.cancel()
-
-        # 获取已完成的任务结果
-        for task in done:
-            try:
-                result = await task
-                if result:  # 如果结果不为空，返回第一个成功的结果
-                    return result
-            except Exception as e:
-                print(f"任务执行出错: {e}")
-                continue
-
-        # 如果第一个完成的任务失败，等待其他任务完成
-        for task in pending:
-            try:
-                result = await task
-                if result:
-                    return result
-            except Exception as e:
-                print(f"任务执行出错: {e}")
-                continue
-
-    except Exception as e:
-        print(f"并行执行出错: {e}")
-
-    return None
-
 
 class PreviewState(rx.State):
     play_url: str = ""
@@ -110,12 +14,14 @@ class PreviewState(rx.State):
     loading: bool = True
     show_code: bool = False
     rq_url: str = ""
+    douban_id: str = ""
+    episode_number: str = ""
     code: str = ""
     current_host: str = ""
 
     @rx.event
     def get_code(self) -> None:
-        self.code = f"curl {self.current_host}/api/url?url={self.rq_url}"
+        self.code = f"curl {self.current_host}/api/douban_id?douban_id={self.douban_id}&episode_number={self.episode_number}"
         self.show_code = True
 
     @rx.event
@@ -127,12 +33,12 @@ class PreviewState(rx.State):
         args = self.router.url.query_parameters
         url = args.get("url", "")
         url = unquote_plus(url)
-        self.rq_url = url
-        playurl = await get_resolved_play_url(url)
-        if playurl:
-            self.play_url = playurl
-        else:
-            self.play_url = "https://vodcnd12a.myqqdd.com/20250714/tCWHmxUP/index.m3u8"
+        douban_id = args.get("douban_id", "")
+        episode_number = args.get("episode_number", "")
+        self.play_url = url
+        self.douban_id = douban_id
+        self.episode_number = episode_number
+
         schema = self.router.url.scheme
         if schema == "https":
             ## using domain
@@ -141,7 +47,7 @@ class PreviewState(rx.State):
             ## get api_url from environment variable:REFLEX_API_URL
             current_host = os.getenv("REFLEX_API_URL")
         self.current_host = current_host
-        self.danmaku_url = f"{self.current_host}/api/url?url={self.rq_url}"
+        self.danmaku_url = f"{self.current_host}/api/douban_id?douban_id={self.douban_id}&episode_number={self.episode_number}"
         print("self.danmaku_url", self.danmaku_url)
         print("self.play_url", self.play_url)
         self.loading = False
