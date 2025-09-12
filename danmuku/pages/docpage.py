@@ -1,6 +1,6 @@
 import reflex as rx
 from ..template import template
-import re
+import os
 
 
 class DocPageState(rx.State):
@@ -14,7 +14,7 @@ class DocPageState(rx.State):
             ## using domain
             self.api_doc = f"{origin_url}/docs"
         else:
-            backend_host = re.sub(r":\d+", ":8080", origin_url)
+            backend_host = os.getenv("REFLEX_API_URL")
             self.api_doc = f"{backend_host}/docs"
 
 

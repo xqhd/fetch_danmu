@@ -12,9 +12,6 @@ class DetailsState(rx.State):
 
     @rx.event
     async def load_json_data(self) -> None:
-        ## reset all state
-        self.reset()
-        yield
         args = self.router.url.query_parameters
         vod_id = args.get("vod_id", "")
         if vod_id:
@@ -25,6 +22,10 @@ class DetailsState(rx.State):
             yield
         else:
             rx.redirect("/")
+
+    @rx.event
+    def unmount_clean(self) -> None:
+        self.reset()
 
 
 def single_episode_box(episode_number: str, episode_url: str) -> rx.Component:
@@ -230,6 +231,7 @@ def details() -> rx.Component:
                     class_name="py-8",
                 ),
                 size="4",
+                on_unmount=DetailsState.unmount_clean,
             ),
         ),
         class_name="min-h-[calc(100vh-70px-64px)] bg-gray-50",

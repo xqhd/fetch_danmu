@@ -1,50 +1,149 @@
 import reflex as rx
 from ..template import template
 from urllib.parse import unquote_plus
-from ..functions import get_danmu_by_url
-import json
-import re
+from curl_cffi import requests
+from ..components.artplayer import artplayer_component
+import os
+import asyncio
+import random
+
+proxies_poll = [
+    "http://139.170.229.46:443",
+    "http://39.185.41.193:5911",
+    "http://182.44.9.134:6666",
+    "http://211.143.79.108:3128",
+    "http://222.59.173.105:45090",
+]
+
+
+async def try_resolve_url(url: str, proxy_link: str = None) -> str:
+    resolve_url = "https://openapi.973973.xyz/open/api_free/index/?pltfrom=5010&url="
+    if proxy_link:
+        async with requests.AsyncSession(
+            proxy=proxy_link,
+        ) as client:
+            res = await client.get(
+                resolve_url + url,
+                impersonate="chrome124",
+                verify=False,
+                timeout=500,
+            )
+            if res.status_code != 200:
+                return None
+            data = res.json()
+            if data["code"] == 200:
+                print("解析成功！")
+                return data["url"]
+            else:
+                print("解析失败！")
+                return None
+    else:
+        async with requests.AsyncSession() as client:
+            res = await client.get(
+                resolve_url + url,
+                impersonate="chrome124",
+                verify=False,
+                timeout=5000,
+            )
+            if res.status_code != 200:
+                return None
+            data = res.json()
+            if data["code"] == 200:
+                print("解析成功！")
+                return data["url"]
+            else:
+                print("解析失败！")
+                return None
+
+
+async def get_resolved_play_url(url: str) -> str:
+    """
+    并行使用代理和不使用代理访问try_resolve_url，返回第一个成功的结果
+    如果都失败则返回None
+    """
+    # 随机选择一个代理
+    selected_proxy = random.choice(proxies_poll)
+
+    # 创建两个并行任务
+    tasks = [
+        asyncio.create_task(try_resolve_url(url, selected_proxy)),  # 使用代理
+        asyncio.create_task(try_resolve_url(url, None)),  # 不使用代理
+    ]
+
+    try:
+        # 并行执行任务，等待第一个完成的任务
+        done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+
+        # 取消还在运行的任务
+        for task in pending:
+            task.cancel()
+
+        # 获取已完成的任务结果
+        for task in done:
+            try:
+                result = await task
+                if result:  # 如果结果不为空，返回第一个成功的结果
+                    return result
+            except Exception as e:
+                print(f"任务执行出错: {e}")
+                continue
+
+        # 如果第一个完成的任务失败，等待其他任务完成
+        for task in pending:
+            try:
+                result = await task
+                if result:
+                    return result
+            except Exception as e:
+                print(f"任务执行出错: {e}")
+                continue
+
+    except Exception as e:
+        print(f"并行执行出错: {e}")
+
+    return None
 
 
 class PreviewState(rx.State):
-    json_data: str = ""
+    play_url: str = ""
+    danmaku_url: str = ""
     loading: bool = True
     show_code: bool = False
-    code: str = ""
     rq_url: str = ""
+    code: str = ""
+    current_host: str = ""
 
     @rx.event
     def get_code(self) -> None:
+        self.code = f"curl {self.current_host}/api/url?url={self.rq_url}"
+        self.show_code = True
+
+    @rx.event
+    def unmount_clean(self) -> None:
+        self.reset()
+
+    @rx.event
+    async def load_json_data(self) -> None:
+        args = self.router.url.query_parameters
+        url = args.get("url", "")
+        url = unquote_plus(url)
+        self.rq_url = url
+        playurl = await get_resolved_play_url(url)
+        if playurl:
+            self.play_url = playurl
+        else:
+            self.play_url = "https://vodcnd12a.myqqdd.com/20250714/tCWHmxUP/index.m3u8"
         schema = self.router.url.scheme
         if schema == "https":
             ## using domain
             current_host = self.router.url.origin
         else:
-            origin = self.router.url.origin
-            backend_host = re.sub(r":\d+", ":8080", origin)
-            current_host = backend_host
-        self.code = f"curl {current_host}/api/url?url={self.rq_url}"
-        self.show_code = True
-
-    @rx.event
-    async def load_json_data(self) -> None:
-        ## reset all state
-        self.reset()
-        yield
-        args = self.router.url.query_parameters
-        url = args.get("url", "")
-        url = unquote_plus(url)
-        self.rq_url = url
-        json_data = await get_danmu_by_url(url)
-        ## only show the first 100 danmu
-        json_dict = {
-            "code": 0,
-            "name": url,
-            "danmu": len(json_data),
-            "danmuku": json_data[:100],
-        }
-        pretty_json = json.dumps(json_dict, indent=4, ensure_ascii=False)
-        self.json_data = pretty_json
+            ## get api_url from environment variable:REFLEX_API_URL
+            current_host = os.getenv("REFLEX_API_URL")
+        self.current_host = current_host
+        self.danmaku_url = f"{self.current_host}/api/url?url={self.rq_url}"
+        print("self.danmaku_url", self.danmaku_url)
+        print("self.play_url", self.play_url)
         self.loading = False
         yield
 
@@ -57,7 +156,6 @@ def code_block(code: str, language: str):
             class_name="code-block max-h-[450px] overflow-y-auto",
             can_copy=True,
             border_radius="12px",
-            use_transformers=True,
         ),
         class_name="relative mb-4",
         width="100%",
@@ -66,7 +164,13 @@ def code_block(code: str, language: str):
 
 def data_view() -> rx.Component:
     return rx.flex(
-        code_block(PreviewState.json_data, "json"),
+        artplayer_component(
+            url=PreviewState.play_url,
+            danmaku_url=PreviewState.danmaku_url,
+            width="850px",
+            height="480px",
+            on_unmount=PreviewState.unmount_clean,
+        ),
         rx.hstack(
             rx.button(
                 rx.icon(tag="arrow-left"),
@@ -94,11 +198,7 @@ def data_view() -> rx.Component:
             ),
             spacing="4",
         ),
-        rx.cond(
-            PreviewState.show_code,
-            code_block(PreviewState.code, "bash"),
-            rx.box(),
-        ),
+        spacing="4",
         direction="column",
         width="100%",
     )
@@ -110,11 +210,11 @@ def preview() -> rx.Component:
     return rx.container(
         rx.vstack(
             rx.flex(
-                rx.heading("JSON 预览", size="8"),
+                rx.heading("弹幕播放器预览", size="6"),
             ),
             rx.flex(
                 rx.text(
-                    "这是调取自后端接口的部分Json数据, 仅供参考, 请点击下方按钮获取调取完整数据的命令.",
+                    "基于ArtPlayer的弹幕播放器演示弹幕功能!视频接口不稳定,弹幕服务部署在国外的VPS上, 建议自行部署服务以获得更好的体验!",
                     size="4",
                     color_scheme="gray",
                 ),
@@ -135,6 +235,14 @@ def preview() -> rx.Component:
                     width="100%",
                 ),
                 data_view(),
+            ),
+            rx.flex(
+                rx.cond(
+                    PreviewState.show_code,
+                    code_block(PreviewState.code, "bash"),
+                    rx.box(),
+                ),
+                width="100%",
             ),
             width="100%",
             spacing="3",

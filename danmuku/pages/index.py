@@ -72,6 +72,10 @@ class IndexState(rx.State):
 
         self.paginate()
 
+    @rx.event
+    def unmount_clean(self) -> None:
+        self.reset()
+
 
 #############components#################
 def search_box() -> rx.Component:
@@ -331,5 +335,6 @@ def index() -> rx.Component:
                 size="4",
             ),
         ),
+        on_unmount=IndexState.unmount_clean,
         class_name="min-h-[calc(100vh-67px-145px)] bg-gray-50",
     )
