@@ -17,7 +17,7 @@
 ### Docker 运行
 
 ```bash
-docker run -d -p 8080:8080 --name fetch-danmu ghcr.io/seqcrafter/fetch-danmu:2.0.0
+docker run -d -p 8080:8080 --name fetch-danmu ghcr.io/seqcrafter/fetch-danmu:2.1.0
 ```
 
 服务将在 `http://127.0.0.1:8080` 启动。
