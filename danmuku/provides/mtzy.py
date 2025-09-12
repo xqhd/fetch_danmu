@@ -2,7 +2,7 @@ from curl_cffi import requests
 from typing import Optional
 import re
 
-API_URL = "https://caiji.maotaizy.cc/api.php/provide/vod/from/mtm3u8/at/josn/"
+API_URL = "http://caiji.dyttzyapi.com/api.php/provide/vod/from/dyttm3u8/at/josn/"
 
 
 async def search_vod_names(vod_name: str) -> Optional[list[str]]:
