@@ -23,7 +23,7 @@ async def search_vod_names(vod_name: str) -> Optional[list[str]]:
                         "vod_id": str(item["vod_id"]),
                         "vod_name": item["vod_name"],
                         "vod_class": item["vod_class"],
-                        "vod_pubdate": item["vod_pubdate"],
+                        "vod_remarks": item["vod_remarks"],
                         "vod_pic": item["vod_pic"],
                     }
                 )

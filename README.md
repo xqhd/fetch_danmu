@@ -12,21 +12,32 @@
 - 🛡️ **异常容错**: 单个平台失败不影响其他平台数据获取
 - 📖 **完整文档**: 内置 Swagger UI 文档
 
+## UI 界面演示：
+
+<img src="https://tncache1-f1.v3mh.com/image/2025/09/14/5ef321af4f2d63b5fc702860014e00c2.png" alt="弹幕播放器" style="max-width:600px">
+
+<details>
+  <summary>点击查看更多截图</summary>
+  <img src="https://tncache1-f1.v3mh.com/image/2025/09/14/f8bec9a052404604a8dbe266a3c9e29b.png" alt="主页" style="max-width:600px">
+  <img src="https://tncache1-f1.v3mh.com/image/2025/09/14/33579f0353ea588db93e297cb8c18291.png" alt="搜索页" style="max-width:600px">
+  <img src="https://tncache1-f1.v3mh.com/image/2025/09/14/9dd918f1b909856caf9605ed72cd6d04.png" alt="详情页" style="max-width:600px">
+  <img src="https://tncache1-f1.v3mh.com/image/2025/09/14/5ef321af4f2d63b5fc702860014e00c2.png" alt="播放页" style="max-width:600px">
+</details>
+
 ## 快速开始
 
 ### Docker 运行
 
 ```bash
-docker run -d -p 8080:8080 --name fetch-danmu ghcr.io/seqcrafter/fetch-danmu:2.1.0
+docker run -d -p 8080:8080 --name fetch-danmu ghcr.io/seqcrafter/fetch-danmu:2.2.0
 ```
 
 服务将在 `http://127.0.0.1:8080` 启动。
 
 ### API 文档
 
-启动服务后，可通过以下地址访问 API 文档：
-
-- Swagger UI: `http://localhost:8080/docs`
+点击导航栏的`API文档`，即可访问 API 文档。
+或者访问`http://127.0.0.1:8080/docpage`。
 
 ## API 接口
 

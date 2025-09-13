@@ -1,11 +1,8 @@
 import reflex as rx
 from ..template import template
 from urllib.parse import unquote_plus
-from curl_cffi import requests
 from ..components.artplayer import artplayer_component
 import os
-import asyncio
-import random
 
 
 class PreviewState(rx.State):
@@ -48,8 +45,6 @@ class PreviewState(rx.State):
             current_host = os.getenv("REFLEX_API_URL")
         self.current_host = current_host
         self.danmaku_url = f"{self.current_host}/api/douban_id?douban_id={self.douban_id}&episode_number={self.episode_number}"
-        print("self.danmaku_url", self.danmaku_url)
-        print("self.play_url", self.play_url)
         self.loading = False
         yield
 
