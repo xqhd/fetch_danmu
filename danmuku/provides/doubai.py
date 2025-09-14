@@ -157,18 +157,32 @@ async def select_by_360(
                     return item
 
 
-def get_latest_douban_hotlist_url(list_type="最近热门国产剧"):
-    today = datetime.date.today()
-    year_month = today.strftime("%Y%m")
-    full_date = today.strftime("%Y%m%d")
-    file_name = f"movie-hotlist-latest-{list_type}-{full_date}.json"
+def build_url(timepoint: datetime.datetime) -> str:
+    year_month = timepoint.strftime("%Y%m")
+    full_date = timepoint.strftime("%Y%m%d")
+    file_name = f"movie-hotlist-latest-最近热门国产剧-{full_date}.json"
     base_url = "https://raw.githubusercontent.com/hantang/cinephile-douban/refs/heads/main/data-hot"
     latest_url = f"{base_url}/{year_month}/{file_name}"
     return latest_url
 
 
+def get_latest_douban_hotlist_url():
+    today = datetime.date.today()
+    yesterday = today - datetime.timedelta(days=1)
+    latest_url = build_url(today)
+    yesterday_url = build_url(yesterday)
+    return latest_url, yesterday_url
+
+
 async def douban_get_recommend_data() -> dict:
-    url = get_latest_douban_hotlist_url()
+    latest_url, yesterday_url = get_latest_douban_hotlist_url()
     async with requests.AsyncSession() as client:
-        res = await client.get(url)
-        return res.json()
+        res = await client.get(latest_url)
+        if res.status_code == 200:
+            return res.json()
+        else:
+            res = await client.get(yesterday_url)
+            if res.status_code == 200:
+                return res.json()
+            else:
+                return {}
