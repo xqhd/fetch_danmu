@@ -3,6 +3,7 @@ from curl_cffi import requests
 from urllib import parse
 import cn2an
 from typing import Optional
+import datetime
 
 
 async def get_platform_link(douban_id: str) -> dict[str, list[str]]:
@@ -154,3 +155,20 @@ async def select_by_360(
                     not season and int(item.get("cat_id")) < 2
                 ):
                     return item
+
+
+def get_latest_douban_hotlist_url(list_type="最近热门国产剧"):
+    today = datetime.date.today()
+    year_month = today.strftime("%Y%m")
+    full_date = today.strftime("%Y%m%d")
+    file_name = f"movie-hotlist-latest-{list_type}-{full_date}.json"
+    base_url = "https://raw.githubusercontent.com/hantang/cinephile-douban/refs/heads/main/data-hot"
+    latest_url = f"{base_url}/{year_month}/{file_name}"
+    return latest_url
+
+
+async def douban_get_recommend_data() -> dict:
+    url = get_latest_douban_hotlist_url()
+    async with requests.AsyncSession() as client:
+        res = await client.get(url)
+        return res.json()

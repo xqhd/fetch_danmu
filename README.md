@@ -29,10 +29,12 @@
 ### Docker 运行
 
 ```bash
-docker run -d -p 8080:8080 --name fetch-danmu ghcr.io/seqcrafter/fetch-danmu:2.2.0
+docker run -d -p 8080:8080 --name fetch-danmu ghcr.io/seqcrafter/fetch-danmu:2.3.0
 ```
 
 服务将在 `http://127.0.0.1:8080` 启动。
+
+> 注意：由于由于 Reflex 的限制，通过我构建的 Docker 镜像，只能本地访问或者使用 https 访问，无法通过 http 远程访问，因为会提示无法找到后端 API.如果你想通过 http 远程访问，需要构建你自己的 Docker 镜像，参考[Dockerfile](Dockerfile), 修改 REFLEX_API_URL 为你的后端 API 地址。
 
 ### API 文档
 

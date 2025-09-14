@@ -1,10 +1,10 @@
 import reflex as rx
 
-artplayer_path = rx.asset("./search_media_cards.jsx", shared=True)
+localjs_path = rx.asset("./search_media_cards.jsx", shared=True)
 
 
 class SearchMediaCards(rx.NoSSRComponent):
-    library = f"$/public{artplayer_path}"
+    library = f"$/public{localjs_path}"
 
     tag = "SearchMediaCards"
 

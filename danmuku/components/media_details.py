@@ -1,11 +1,11 @@
 import reflex as rx
 from typing import Dict, Any
 
-artplayer_path = rx.asset("./media_details.jsx", shared=True)
+localjs_path = rx.asset("./media_details.jsx", shared=True)
 
 
 class MediaDetails(rx.NoSSRComponent):
-    library = f"$/public{artplayer_path}"
+    library = f"$/public{localjs_path}"
 
     tag = "MediaDetails"
 
