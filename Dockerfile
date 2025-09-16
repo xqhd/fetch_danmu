@@ -26,8 +26,7 @@ COPY rxconfig.py ./
 RUN reflex init
 
 # Install pre-cached frontend dependencies (if exist)
-COPY .web/bun.lockb .web/package.json .web/
-RUN if [ -f .web/bun.lockb ]; then cd .web && ~/.local/share/reflex/bun/bin/bun install --frozen-lockfile; fi
+RUN if [ -f .web/bun.lockb ]; then cp .web/bun.lockb /tmp/; fi
 
 # Copy local context to `/app` inside container (see .dockerignore)
 COPY . .
